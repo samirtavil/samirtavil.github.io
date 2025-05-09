@@ -1,3 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>supersoft</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #111;
+      text-align: center;
+      padding: 2rem;
+    }
+    img.logo {
+      max-width: 400px;
+      width: 80%;
+      height: auto;
+      margin: 2rem auto;
+    }
+    .spotify {
+      margin: 2rem auto;
+    }
+    iframe {
+      border: none;
+      width: 100%;
+      max-width: 400px;
+      height: 152px;
+    }
+    .instagram {
+      margin-top: 2rem;
+      font-size: 1rem;
+    }
+    .instagram a {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #d6249f;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
 <body>
-  <h1 style="color: red;">Testseite funktioniert!</h1>
+  <img src="supersoft logo.png" alt="supersoft logo" class="logo" />
+
+  <div class="spotify">
+    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/3s5XnLtcMr2F9CiOBlgbed?utm_source=generator" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+  </div>
+
+  <div class="instagram">
+    <p>Aktuelle Releases und mehr auf unserem Instagram-Kanal.</p>
+    <a href="https://instagram.com" target="_blank">Zu Instagram</a>
+  </div>
 </body>
+</html>

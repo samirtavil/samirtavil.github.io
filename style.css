@@ -1,4 +1,4 @@
-/* ===== Basis ===== */
+/* ===== Global ===== */
 
 * {
   box-sizing: border-box;
@@ -7,17 +7,21 @@
 body {
   margin: 0;
   min-height: 100vh;
+
   display: flex;
   justify-content: center;
 
-  /* Hintergrund der Seite */
+  /* Hintergrundbild */
   background-image: url("img/gradient.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+
+  /* Parallax-Effekt */
+  background-attachment: fixed;
 }
 
-/* Haupt-Container */
+/* ===== Main Container ===== */
 
 .desktop {
   width: 100%;
@@ -31,55 +35,28 @@ body {
   color: #262626;
 }
 
-/* Exportierte Gradient-Bilder ausblenden (wir nutzen den Body-Hintergrund) */
-
-.gradient-logo {
-  display: none;
-}
-
-/* ===== Navigation oben ===== */
+/* ===== Navigation ===== */
 
 .navigation {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 80px;
 }
 
-.frame {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.icon {
-  width: 26px;
-  height: 22px;
-}
-
-.frame-wrapper {
-  display: flex;
-  gap: 32px;
-}
-
+.frame-wrapper,
 .frame-2 {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 32px;
 }
 
 .text-wrapper-2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-
   font-family: var(--link-font-family);
   font-weight: var(--link-font-weight);
   font-size: var(--link-font-size);
   letter-spacing: var(--link-letter-spacing);
   line-height: var(--link-line-height);
-  font-style: var(--link-font-style);
   color: #262626;
 }
 
@@ -88,7 +65,7 @@ a {
   color: inherit;
 }
 
-/* ===== Mittelteil: SECRET SANTA ===== */
+/* ===== SECRET SANTA Block ===== */
 
 .footer {
   width: 100%;
@@ -97,7 +74,6 @@ a {
   padding: 40px 0 24px;
 
   border-top: 1px solid rgba(38, 38, 38, 0.15);
-
   text-align: center;
 }
 
@@ -107,78 +83,57 @@ a {
 }
 
 .secret-santa {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
   font-family: var(--heading-3-font-family);
   font-weight: var(--heading-3-font-weight);
   font-size: var(--heading-3-font-size);
-  letter-spacing: var(--heading-3-letter-spacing);
   line-height: var(--heading-3-line-height);
-  font-style: var(--heading-3-font-style);
-  color: #262626;
-}
-
-/* ===== Contact-Bereich ===== */
-
-.contact {
-  margin-top: 32px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  width: 100%;
-  max-width: 900px;
-  align-self: center;
-}
-
-.insta,
-.email {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-
-  font-family: var(--heading-1-font-family);
-  font-weight: var(--heading-1-font-weight);
-  font-size: var(--heading-1-font-size);
-  letter-spacing: var(--heading-1-letter-spacing);
-  line-height: var(--heading-1-line-height);
-  font-style: var(--heading-1-font-style);
+  letter-spacing: var(--heading-3-letter-spacing);
   color: #262626;
   text-align: center;
 }
 
-/* ===== Untere Zeile: SUPERSOFT ©2025 ===== */
+/* ===== Contact ===== */
 
-.div {
-  margin-top: auto; /* schiebt den Block nach unten */
+.contact {
+  margin-top: 32px;
   width: 100%;
   max-width: 900px;
   align-self: center;
 
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   align-items: center;
-  justify-content: space-between;
+}
 
-  padding-top: 16px;
+.insta,
+.email {
+  font-family: var(--heading-1-font-family);
+  font-weight: var(--heading-1-font-weight);
+  font-size: var(--heading-1-font-size);
+  line-height: var(--heading-1-line-height);
+  letter-spacing: var(--heading-1-letter-spacing);
+  color: #262626;
+}
+
+/* ===== Bottom Row ===== */
+
+.div {
+  margin-top: auto;
+  width: 100%;
+  max-width: 900px;
+  align-self: center;
+
+  display: flex;
+  justify-content: space-between;
 }
 
 .text-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-
   font-family: var(--heading-3-font-family);
   font-weight: var(--heading-3-font-weight);
   font-size: var(--heading-3-font-size);
   letter-spacing: var(--heading-3-letter-spacing);
   line-height: var(--heading-3-line-height);
-  font-style: var(--heading-3-font-style);
   color: #262626;
+  white-space: nowrap;
 }

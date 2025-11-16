@@ -115,18 +115,16 @@ a {
 .footer .logo {
   display: block;
 
-  /* Proportional zur Seitenbreite */
-  width: 22vw;
+  height: 80px;        /* Hauptgröße – wird sauber sichtbar */
+  width: auto;         /* Breite automatisch nach Proportionen */
 
-  /* untere & obere Grenzen – damit es nie lächerlich groß oder zu klein wird */
-  max-width: 260px;   /* auf großem Bildschirm nicht größer */
-  min-width: 120px;   /* auf Handy nicht zu klein */
-
-  height: auto;
+  max-height: 120px;   /* obere Grenze */
+  min-height: 60px;    /* untere Grenze */
 
   margin: 20px auto 32px;
   opacity: 0.9;
 }
+
 
 /* ===== Bottom Row ===== */
 

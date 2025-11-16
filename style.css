@@ -114,9 +114,16 @@ a {
 
 .footer .logo {
   display: block;
-  width: 120px;      /* feste, kleine Breite */
-  max-width: 120px;  /* doppelt gemoppelt klein */
-  height: auto;      /* Proportionen bleiben korrekt */
+
+  /* Proportional zur Seitenbreite */
+  width: 22vw;
+
+  /* untere & obere Grenzen – damit es nie lächerlich groß oder zu klein wird */
+  max-width: 260px;   /* auf großem Bildschirm nicht größer */
+  min-width: 120px;   /* auf Handy nicht zu klein */
+
+  height: auto;
+
   margin: 20px auto 32px;
   opacity: 0.9;
 }

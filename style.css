@@ -1,207 +1,184 @@
-/* Basis */
+/* ===== Basis ===== */
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-}
-
-/* Haupt-Container */
-
-.desktop {
-  position: relative;
-  width: 1280px;
   min-height: 100vh;
-  margin: 0 auto; /* ← Das zentriert den gesamten Inhalt */
+  display: flex;
+  justify-content: center;
+
+  /* Hintergrund der Seite */
   background-image: url("img/gradient.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-/* Die beiden exportierten <img class="gradient-logo"> ausblenden,
-   weil sie auf nicht vorhandene Dateien zeigen */
-.desktop .gradient-logo {
+/* Haupt-Container */
+
+.desktop {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 24px 24px 32px;
+  color: #262626;
+}
+
+/* Exportierte Gradient-Bilder ausblenden (wir nutzen den Body-Hintergrund) */
+
+.gradient-logo {
   display: none;
 }
 
-/* SECRET SANTA – Mittelteil */
+/* ===== Navigation oben ===== */
 
-.desktop .footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 1186px;
-  margin: 160px auto 0;
-  padding: 50px 0 0;
-  background-color: transparent;
-  border-top: 1px solid rgba(38, 38, 38, 0.15);
-}
-
-.desktop .text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  width: 100%;
-  padding: 50px 0;
-  text-align: center;
-}
-
-.desktop .secret-santa {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: auto;
-  font-family: var(--heading-3-font-family);
-  font-weight: var(--heading-3-font-weight);
-  color: #262626;
-  font-size: var(--heading-3-font-size);
-  text-align: center;
-  letter-spacing: var(--heading-3-letter-spacing);
-  line-height: var(--heading-3-line-height);
-  font-style: var(--heading-3-font-style);
-}
-
-/* CONTACT-Bereich */
-
-.desktop .contact {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  max-width: 1208px;
-  margin: 80px auto 0;
-  padding: 50px 0;
-}
-
-.desktop .insta {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  font-family: var(--heading-1-font-family);
-  font-weight: var(--heading-1-font-weight);
-  color: #262626;
-  font-size: var(--heading-1-font-size);
-  text-align: center;
-  letter-spacing: var(--heading-1-letter-spacing);
-  line-height: var(--heading-1-line-height);
-  font-style: var(--heading-1-font-style);
-}
-
-.desktop .email {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  font-family: var(--heading-1-font-family);
-  font-weight: var(--heading-1-font-weight);
-  color: #262626;
-  font-size: var(--heading-1-font-size);
-  text-align: center;
-  letter-spacing: var(--heading-1-letter-spacing);
-  line-height: var(--heading-1-line-height);
-  font-style: var(--heading-1-font-style);
-}
-
-/* Footer unten (SUPERSOFT ©2025) */
-
-.desktop .div {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1208px;
+.navigation {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 36px;
+  margin-bottom: 80px;
 }
 
-.desktop .text-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: fit-content;
-  font-family: var(--heading-3-font-family);
-  font-weight: var(--heading-3-font-weight);
-  color: #262626;
-  font-size: var(--heading-3-font-size);
-  letter-spacing: var(--heading-3-letter-spacing);
-  line-height: var(--heading-3-line-height);
-  white-space: nowrap;
-  font-style: var(--heading-3-font-style);
-}
-
-/* Navigation oben */
-
-.desktop .navigation {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 16px 16px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  box-sizing: border-box;
-}
-
-.desktop .frame {
+.frame {
   display: inline-flex;
-  gap: 4px;
-  flex: 0 0 auto;
   align-items: center;
-  position: relative;
+  gap: 8px;
 }
 
-.desktop .icon {
-  position: relative;
+.icon {
   width: 26px;
   height: 22px;
-  aspect-ratio: 1.15;
 }
 
-.desktop .text-wrapper-2 {
-  position: relative;
+.frame-wrapper {
+  display: flex;
+  gap: 32px;
+}
+
+.frame-2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.text-wrapper-2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: fit-content;
+  white-space: nowrap;
+
   font-family: var(--link-font-family);
   font-weight: var(--link-font-weight);
-  color: #262626;
   font-size: var(--link-font-size);
-  text-align: right;
   letter-spacing: var(--link-letter-spacing);
   line-height: var(--link-line-height);
-  white-space: nowrap;
   font-style: var(--link-font-style);
+  color: #262626;
 }
 
-.desktop .frame-wrapper {
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ===== Mittelteil: SECRET SANTA ===== */
+
+.footer {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 0 24px;
+
+  border-top: 1px solid rgba(38, 38, 38, 0.15);
+
+  text-align: center;
+}
+
+.text {
   display: flex;
-  justify-content: flex-end;
-  gap: 24px;
-  flex: 1;
-  flex-grow: 1;
-  align-items: center;
-  position: relative;
+  justify-content: center;
 }
 
-.desktop .frame-2 {
+.secret-santa {
   display: inline-flex;
-  justify-content: flex-end;
-  gap: 32px;
-  flex: 0 0 auto;
   align-items: center;
-  position: relative;
+  justify-content: center;
+
+  font-family: var(--heading-3-font-family);
+  font-weight: var(--heading-3-font-weight);
+  font-size: var(--heading-3-font-size);
+  letter-spacing: var(--heading-3-letter-spacing);
+  line-height: var(--heading-3-line-height);
+  font-style: var(--heading-3-font-style);
+  color: #262626;
+}
+
+/* ===== Contact-Bereich ===== */
+
+.contact {
+  margin-top: 32px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  max-width: 900px;
+  align-self: center;
+}
+
+.insta,
+.email {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+
+  font-family: var(--heading-1-font-family);
+  font-weight: var(--heading-1-font-weight);
+  font-size: var(--heading-1-font-size);
+  letter-spacing: var(--heading-1-letter-spacing);
+  line-height: var(--heading-1-line-height);
+  font-style: var(--heading-1-font-style);
+  color: #262626;
+  text-align: center;
+}
+
+/* ===== Untere Zeile: SUPERSOFT ©2025 ===== */
+
+.div {
+  margin-top: auto; /* schiebt den Block nach unten */
+  width: 100%;
+  max-width: 900px;
+  align-self: center;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding-top: 16px;
+}
+
+.text-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+
+  font-family: var(--heading-3-font-family);
+  font-weight: var(--heading-3-font-weight);
+  font-size: var(--heading-3-font-size);
+  letter-spacing: var(--heading-3-letter-spacing);
+  line-height: var(--heading-3-line-height);
+  font-style: var(--heading-3-font-style);
+  color: #262626;
 }

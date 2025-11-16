@@ -112,6 +112,14 @@ a {
   color: #262626;
 }
 
+.logo {
+  display: block;
+  width: 18vw;        /* deutlich kleiner (früher 40vw) */
+  max-width: 140px;   /* absolute Obergrenze – klein genug */
+  margin: 20px auto 32px;
+  opacity: 0.9;       /* leicht soften Look, optional */
+}
+
 /* ===== Bottom Row ===== */
 
 .div {

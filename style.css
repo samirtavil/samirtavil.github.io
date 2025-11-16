@@ -8,10 +8,9 @@ body {
 
 .desktop {
   position: relative;
-  width: 100%;
-  max-width: 1280px;
+  width: 1280px;
   min-height: 100vh;
-  margin: 0 auto;
+  margin: 0 auto; /* ← Das zentriert den gesamten Inhalt */
   background-image: url("img/gradient.png");
   background-size: cover;
   background-position: center;

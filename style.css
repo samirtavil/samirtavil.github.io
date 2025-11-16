@@ -112,12 +112,13 @@ a {
   color: #262626;
 }
 
-.logo {
+.footer .logo {
   display: block;
-  width: 18vw;        /* deutlich kleiner (früher 40vw) */
-  max-width: 140px;   /* absolute Obergrenze – klein genug */
+  width: 120px;      /* feste, kleine Breite */
+  max-width: 120px;  /* doppelt gemoppelt klein */
+  height: auto;      /* Proportionen bleiben korrekt */
   margin: 20px auto 32px;
-  opacity: 0.9;       /* leicht soften Look, optional */
+  opacity: 0.9;
 }
 
 /* ===== Bottom Row ===== */

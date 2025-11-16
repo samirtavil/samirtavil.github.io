@@ -1,256 +1,49 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>supersoft — flow (mist light)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=Manrope:wght@300..800&display=swap" rel="stylesheet">
-  <style>
-    /* dein gesamtes CSS */
-    :root{
-      --bg:#f8f9fb;
-      --bg-2:#ffffff;
-      --text:#0c0e12;
-      --muted:#5e6575;
-      --line:rgba(0,0,0,.06);
-      --r:26px;
-      --shadow:0 12px 30px rgba(17,24,39,.06), 0 1px 2px rgba(17,24,39,.06);
-      --a1:220 95% 56%;
-      --a2:265 90% 60%;
-      --a3:165 70% 45%;
-      --dur:900ms;
-      --ease:cubic-bezier(.2,.8,.2,1);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      color:var(--text);
-      font-family:Inter, Manrope, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(180deg, var(--bg), var(--bg-2));
-      overflow:hidden;
-      position:relative;
-      isolation:isolate;
-    }
-    a{color:inherit;text-decoration:none}
-    /* --- Restliches CSS (Mist, Topbar, Stage, Cards, Dots, Progressbar etc.) ist unverändert geblieben --- */
-  </style>
-</head>
-<body>
-  <!-- soft, modern background layers -->
-  <div class="mist" aria-hidden="true"></div>
-  <div class="grit" aria-hidden="true"></div>
-
-  <!-- Topbar -->
-  <div class="topbar" role="navigation" aria-label="Hauptnavigation">
-    <div class="logo"><span class="logo-dot" aria-hidden="true"></span><span>supersoft</span></div>
-    <div class="nav">
-      <a href="#" data-goto="0">Home</a>
-      <a href="#" data-goto="1">Artists</a>
-      <a href="#" data-goto="2">Events</a>
-      <a href="#" data-goto="3">Über uns</a>
-      <a href="#" data-goto="4">Kontakt</a>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="globals.css" />
+    <link rel="stylesheet" href="styleguide.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="desktop">
+      <img class="gradient-logo" src="img/gradient-logo-1.png" />
+      <footer class="footer">
+        <div class="text">
+          <div class="secret-santa">SECRET SANTA<br />18.12<br />@TORTEBAR</div>
+        </div>
+      </footer>
+      <div class="contact">
+        <a href="https://www.instagram.com/suuupersoft/" target="_blank" rel="noopener noreferrer"
+          ><div class="insta">INSTA</div></a
+        >
+        <a href="mailto:management@supersoft.studio" target="_blank" rel="noopener noreferrer"
+          ><div class="email">EMAIL</div></a
+        >
+      </div>
+      <img class="gradient-logo" src="img/gradient-logo-2.png" />
+      <div class="div">
+        <div class="text-wrapper">SUPERSOFT</div>
+        <div class="text-wrapper">©2025</div>
+      </div>
+      <div class="navigation">
+        <div class="frame">
+          <div class="icon"></div>
+          <div class="text-wrapper-2">HOME</div>
+        </div>
+        <div class="frame-wrapper">
+          <a href="mailto:hello@figma.com" target="_blank" rel="noopener noreferrer"
+            ><div class="frame-2">
+              <div class="text-wrapper-2">ABOUT</div>
+              <a href="mailto: management@supersoft.studio" target="_blank" rel="noopener noreferrer"
+                ><div class="text-wrapper-2">CONTACT</div></a
+              >
+            </div></a
+          >
+        </div>
+      </div>
     </div>
-  </div>
-
-  <!-- Stage -->
-  <div class="stage" id="stage">
-    <!-- HOME -->
-    <section class="panel" data-index="0" data-state="active">
-      <div class="card hero">
-        <div class="card-content">
-          <div class="eyebrow">label • events • booking</div>
-          <h1 class="brand">supersoft</h1>
-          <p class="lead">Sleeke elektronische Musik. Kuratiert für Clubs, Kopfhörer und die goldene Stunde danach.</p>
-          <div style="margin-top:24px; display:flex; gap:12px; flex-wrap:wrap">
-            <a class="btn" href="#" data-goto="1">Unsere Artists</a>
-            <a class="btn ghost" href="#" data-goto="2">Nächste Events</a>
-          </div>
-        </div>
-        <div class="card-content">
-          <div class="about img" aria-hidden="true" style="height:360px"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ARTISTS -->
-    <section class="panel" data-index="1">
-      <div class="card">
-        <div class="card-content">
-          <div class="eyebrow">Roster</div>
-          <h2 style="margin:.2em 0 .6em 0">Artists</h2>
-          <div class="artists">
-            <article class="artist">
-              <div class="chip">Techno</div>
-              <div class="cover"></div>
-              <h3>multiplayer</h3>
-            </article>
-            <article class="artist">
-              <div class="chip">House</div>
-              <div class="cover"></div>
-              <h3>aintjuly</h3>
-            </article>
-            <article class="artist">
-              <div class="chip">Trance</div>
-              <div class="cover"></div>
-              <h3>tba</h3>
-            </article>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- EVENTS -->
-    <section class="panel" data-index="2">
-      <div class="card events">
-        <div class="card-content">
-          <div class="eyebrow">Don’t Miss</div>
-          <h2 style="margin:.2em 0 .4em 0">Events</h2>
-          <p class="lead">Kuratiert von supersoft — intime Clubnächte und Showcase-Reihen.</p>
-        </div>
-        <div class="card-content timeline">
-          <div class="event"><strong>Berlin</strong><br><small>Fr, 12. Sep – Watergate: supersoft takeover</small></div>
-          <div class="event"><strong>Leipzig</strong><br><small>Sa, 27. Sep – mjut w/ multiplayer (Live)</small></div>
-          <div class="event"><strong>Hamburg</strong><br><small>Fr, 10. Okt – PAL Floor 2 curated by supersoft</small></div>
-          <div class="event"><strong>München</strong><br><small>Sa, 25. Okt – Blitz w/ aintjuly (DJ)</small></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ABOUT -->
-    <section class="panel" data-index="3">
-      <div class="card about">
-        <div class="card-content">
-          <div class="eyebrow">Manifest</div>
-          <h2 style="margin:.2em 0 .4em 0">Über supersoft</h2>
-          <p class="lead">Wir sind ein Label & Kollektiv aus Berlin. Wir glauben an klare Ästhetik, starke Identitäten und Musik, die hängen bleibt. Release- und Event-Strategien denken wir datenbasiert — ohne den Vibe zu verlieren.</p>
-        </div>
-        <div class="card-content">
-          <div class="img" aria-hidden="true"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section class="panel" data-index="4">
-      <div class="card contact">
-        <div class="cta-card">
-          <div class="card-content">
-            <div class="eyebrow">Let’s talk</div>
-            <h2 style="margin:.2em 0 .4em 0">Booking & Anfragen</h2>
-            <p class="lead">Schreib uns für Bookings, Presse & Collabs. Wir melden uns kurzfristig.</p>
-            <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap">
-              <a class="btn" href="mailto:hello@supersoft.studio">hello@supersoft.studio</a>
-              <a class="btn ghost" href="#" id="copyEmail">E-Mail kopieren</a>
-            </div>
-          </div>
-        </div>
-        <div class="card-content">
-          <ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px; color:var(--muted)">
-            <li>Instagram · <a href="#">@supersoft</a></li>
-            <li>SoundCloud · <a href="#">/supersoft</a></li>
-            <li>Berlin, Germany</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- Dots -->
-  <div class="dots" id="dots" aria-label="Sektionen">
-    <button class="dot active" aria-label="Home" data-goto="0"></button>
-    <button class="dot" aria-label="Artists" data-goto="1"></button>
-    <button class="dot" aria-label="Events" data-goto="2"></button>
-    <button class="dot" aria-label="Über uns" data-goto="3"></button>
-    <button class="dot" aria-label="Kontakt" data-goto="4"></button>
-  </div>
-
-  <!-- Progress -->
-  <div class="progress" id="progress"></div>
-
-  <!-- Script -->
-  <script>
-    (function(){
-      const panels = Array.from(document.querySelectorAll('.panel'));
-      const dots = Array.from(document.querySelectorAll('.dot'));
-      const nav = Array.from(document.querySelectorAll('[data-goto]'));
-      const progress = document.getElementById('progress');
-      const copyBtn = document.getElementById('copyEmail');
-      let index = 0;
-      let locked = false;
-      let touchStartY = 0;
-      const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-
-      function setStates(curr, next, dir){
-        panels.forEach(p=> p.removeAttribute('data-state'));
-        if(curr!==null) panels[curr].setAttribute('data-state', `leaving-${dir}`);
-        panels[next].setAttribute('data-state', `entering-${dir}`);
-        setTimeout(()=>{
-          panels.forEach(p=> p.removeAttribute('data-state'));
-          panels[next].setAttribute('data-state','active');
-        }, 900);
-      }
-
-      function goTo(i){
-        i = clamp(i, 0, panels.length-1);
-        if(i===index || locked) return;
-        locked = true;
-        const dir = (i>index) ? 'next' : 'prev';
-        setStates(index, i, dir);
-        index = i;
-        dots.forEach((d,di)=> d.classList.toggle('active', di===index));
-        progress.style.width = ((index) / (panels.length - 1)) * 100 + '%';
-        document.documentElement.style.setProperty('--a2', `${265 + index*6} 90% 60%`);
-        setTimeout(()=> locked=false, 900);
-      }
-
-      function next(){ goTo(index+1); }
-      function prev(){ goTo(index-1); }
-
-      panels[0].setAttribute('data-state','active');
-
-      window.addEventListener('wheel', (e)=>{
-        if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        e.preventDefault();
-        (e.deltaY>0?next:prev)();
-      }, {passive:false});
-
-      window.addEventListener('touchstart', (e)=>{
-        touchStartY = e.touches[0].clientY;
-      }, {passive:true});
-
-      window.addEventListener('touchend', (e)=>{
-        const dy = e.changedTouches[0].clientY - touchStartY;
-        if(Math.abs(dy) < 40) return;
-        dy<0 ? next() : prev();
-      }, {passive:true});
-
-      window.addEventListener('keydown', (e)=>{
-        if(['ArrowDown','PageDown','Space'].includes(e.key)) { e.preventDefault(); next(); }
-        if(['ArrowUp','PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
-        if(e.key==='Home'){ e.preventDefault(); goTo(0); }
-        if(e.key==='End'){ e.preventDefault(); goTo(panels.length-1); }
-      });
-
-      [...dots, ...nav].forEach(el=> el.addEventListener('click', (e)=>{
-        const i = +el.dataset.goto;
-        e.preventDefault();
-        goTo(i);
-      }));
-
-      if(copyBtn){
-        copyBtn.addEventListener('click', (e)=>{
-          e.preventDefault();
-          const email='hello@supersoft.studio';
-          navigator.clipboard.writeText(email).then(()=>{
-            copyBtn.textContent='Kopiert ✓';
-            setTimeout(()=> copyBtn.textContent='E-Mail kopieren', 1200);
-          });
-        });
-      }
-    })();
-  </script>
-</body>
+  </body>
 </html>

@@ -114,16 +114,19 @@ a {
 
 .footer .logo {
   display: block;
+  height: auto;          /* Proportionen beibehalten */
 
-  height: 80px;        /* Hauptgröße – wird sauber sichtbar */
-  width: auto;         /* Breite automatisch nach Proportionen */
+  /* Proportional zur Breite des Viewports */
+  width: 24vw;
 
-  max-height: 120px;   /* obere Grenze */
-  min-height: 60px;    /* untere Grenze */
+  /* Grenzen, damit es nicht lächerlich groß/klein wird */
+  min-width: 3200px;
+  max-width: 720px;
 
-  margin: 20px auto 32px;
+  margin: 32px auto 40px;
   opacity: 0.9;
 }
+
 
 
 /* ===== Bottom Row ===== */

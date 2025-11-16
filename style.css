@@ -1,0 +1,204 @@
+.desktop {
+  position: relative;
+  width: 1280px;
+  height: 1386px;
+  background-image: url(./img/desktop.png);
+  background-size: cover;
+  background-position: 50% 50%;
+}
+
+.desktop .gradient-logo {
+  position: absolute;
+  top: 189px;
+  left: 216px;
+  width: 848px;
+  height: 137px;
+  aspect-ratio: 6.19;
+}
+
+.desktop .footer {
+  display: flex;
+  flex-direction: column;
+  max-width: 1400px;
+  width: 1186px;
+  height: 561px;
+  align-items: center;
+  padding: 50px 0px 0px;
+  position: absolute;
+  top: 298px;
+  left: 47px;
+  background-color: transparent;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-right-style: none;
+  border-bottom-style: none;
+  border-left-style: none;
+  border-color: transparent;
+}
+
+.desktop .text {
+  justify-content: center;
+  padding: 50px 0px;
+  position: relative;
+  align-self: stretch;
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.desktop .secret-santa {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 338px;
+  margin-top: -1.00px;
+  font-family: var(--heading-3-font-family);
+  font-weight: var(--heading-3-font-weight);
+  color: #262626;
+  font-size: var(--heading-3-font-size);
+  text-align: center;
+  letter-spacing: var(--heading-3-letter-spacing);
+  line-height: var(--heading-3-line-height);
+  font-style: var(--heading-3-font-style);
+}
+
+.desktop .contact {
+  flex-direction: column;
+  width: 1208px;
+  gap: 10px;
+  padding: 50px 0px;
+  position: absolute;
+  top: 1002px;
+  left: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.desktop .insta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  margin-top: -1.00px;
+  font-family: var(--heading-1-font-family);
+  font-weight: var(--heading-1-font-weight);
+  color: #262626;
+  font-size: var(--heading-1-font-size);
+  text-align: center;
+  letter-spacing: var(--heading-1-letter-spacing);
+  line-height: var(--heading-1-line-height);
+  font-style: var(--heading-1-font-style);
+}
+
+.desktop .email {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  font-family: var(--heading-1-font-family);
+  font-weight: var(--heading-1-font-weight);
+  color: #262626;
+  font-size: var(--heading-1-font-size);
+  text-align: center;
+  letter-spacing: var(--heading-1-letter-spacing);
+  line-height: var(--heading-1-line-height);
+  font-style: var(--heading-1-font-style);
+}
+
+.desktop .div {
+  width: 1208px;
+  height: 96px;
+  justify-content: space-between;
+  padding: 50px 0px;
+  position: fixed;
+  top: 1290px;
+  left: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.desktop .text-wrapper {
+  position: relative;
+  justify-content: center;
+  width: fit-content;
+  margin-top: -27.00px;
+  margin-bottom: -25.00px;
+  font-family: var(--heading-3-font-family);
+  font-weight: var(--heading-3-font-weight);
+  color: #262626;
+  font-size: var(--heading-3-font-size);
+  letter-spacing: var(--heading-3-letter-spacing);
+  line-height: var(--heading-3-line-height);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  font-style: var(--heading-3-font-style);
+}
+
+.desktop .navigation {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 16px 16px;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.desktop .frame {
+  display: inline-flex;
+  gap: 4px;
+  flex: 0 0 auto;
+  align-items: center;
+  position: relative;
+}
+
+.desktop .icon {
+  position: relative;
+  width: 26px;
+  height: 22px;
+  aspect-ratio: 1.15;
+}
+
+.desktop .text-wrapper-2 {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: -1.00px;
+  font-family: var(--link-font-family);
+  font-weight: var(--link-font-weight);
+  color: #262626;
+  font-size: var(--link-font-size);
+  text-align: right;
+  letter-spacing: var(--link-letter-spacing);
+  line-height: var(--link-line-height);
+  white-space: nowrap;
+  font-style: var(--link-font-style);
+}
+
+.desktop .frame-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  flex: 1;
+  flex-grow: 1;
+  align-items: center;
+  position: relative;
+}
+
+.desktop .frame-2 {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  position: relative;
+}

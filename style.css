@@ -1,50 +1,52 @@
-.desktop {
-  position: relative;
-  width: 1280px;
-  height: 1386px;
-  background-image: url(./img/gradient.png);
-  background-size: cover;
-  background-position: 50% 50%;
+/* Basis */
+
+body {
+  margin: 0;
 }
 
-.desktop .gradient-logo {
-  position: absolute;
-  top: 189px;
-  left: 216px;
-  width: 848px;
-  height: 137px;
-  aspect-ratio: 6.19;
+/* Haupt-Container */
+
+.desktop {
+  position: relative;
+  width: 100%;
+  max-width: 1280px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-image: url("img/gradient.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
+/* Die beiden exportierten <img class="gradient-logo"> ausblenden,
+   weil sie auf nicht vorhandene Dateien zeigen */
+.desktop .gradient-logo {
+  display: none;
+}
+
+/* SECRET SANTA – Mittelteil */
 
 .desktop .footer {
   display: flex;
   flex-direction: column;
-  max-width: 1400px;
-  width: 1186px;
-  height: 561px;
   align-items: center;
-  padding: 50px 0px 0px;
-  position: absolute;
-  top: 298px;
-  left: 47px;
+  justify-content: center;
+  width: 100%;
+  max-width: 1186px;
+  margin: 160px auto 0;
+  padding: 50px 0 0;
   background-color: transparent;
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-right-style: none;
-  border-bottom-style: none;
-  border-left-style: none;
-  border-color: transparent;
+  border-top: 1px solid rgba(38, 38, 38, 0.15);
 }
 
 .desktop .text {
-  justify-content: center;
-  padding: 50px 0px;
-  position: relative;
-  align-self: stretch;
-  width: 100%;
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 100%;
+  padding: 50px 0;
+  text-align: center;
 }
 
 .desktop .secret-santa {
@@ -52,8 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 338px;
-  margin-top: -1.00px;
+  width: auto;
   font-family: var(--heading-3-font-family);
   font-weight: var(--heading-3-font-weight);
   color: #262626;
@@ -64,17 +65,18 @@
   font-style: var(--heading-3-font-style);
 }
 
+/* CONTACT-Bereich */
+
 .desktop .contact {
-  flex-direction: column;
-  width: 1208px;
-  gap: 10px;
-  padding: 50px 0px;
-  position: absolute;
-  top: 1002px;
-  left: 36px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 1208px;
+  margin: 80px auto 0;
+  padding: 50px 0;
 }
 
 .desktop .insta {
@@ -83,7 +85,6 @@
   align-items: center;
   justify-content: center;
   align-self: stretch;
-  margin-top: -1.00px;
   font-family: var(--heading-1-font-family);
   font-weight: var(--heading-1-font-weight);
   color: #262626;
@@ -110,24 +111,27 @@
   font-style: var(--heading-1-font-style);
 }
 
+/* Footer unten (SUPERSOFT ©2025) */
+
 .desktop .div {
-  width: 1208px;
-  height: 96px;
-  justify-content: space-between;
-  padding: 50px 0px;
   position: fixed;
-  top: 1290px;
-  left: 36px;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1208px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 36px;
 }
 
 .desktop .text-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
   justify-content: center;
   width: fit-content;
-  margin-top: -27.00px;
-  margin-bottom: -25.00px;
   font-family: var(--heading-3-font-family);
   font-weight: var(--heading-3-font-weight);
   color: #262626;
@@ -135,10 +139,10 @@
   letter-spacing: var(--heading-3-letter-spacing);
   line-height: var(--heading-3-line-height);
   white-space: nowrap;
-  display: flex;
-  align-items: center;
   font-style: var(--heading-3-font-style);
 }
+
+/* Navigation oben */
 
 .desktop .navigation {
   display: flex;
@@ -149,6 +153,7 @@
   position: fixed;
   top: 0;
   left: 0;
+  box-sizing: border-box;
 }
 
 .desktop .frame {
@@ -172,7 +177,6 @@
   align-items: center;
   justify-content: center;
   width: fit-content;
-  margin-top: -1.00px;
   font-family: var(--link-font-family);
   font-weight: var(--link-font-weight);
   color: #262626;

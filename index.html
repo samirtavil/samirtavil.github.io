@@ -1,60 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="globals.css" />
-    <link rel="stylesheet" href="styleguide.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Supersoft</title>
+    <meta name="description" content="Supersoft — Kollektiv für Events, Musik und Community." />
+    <link rel="icon" type="image/webp" href="img/logo.webp" />
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
-    <div class="desktop">
-
-      <div class="navigation">
-        <div class="frame">
-          <div class="text-wrapper-2">HOME</div>
+    <div class="page">
+      <nav class="nav">
+        <a class="nav__link" href="index.html" aria-current="page">Home</a>
+        <div class="nav__group">
+          <a class="nav__link" href="about.html">About</a>
+          <a class="nav__link" href="mailto:management@supersoft.studio">Contact</a>
         </div>
+      </nav>
 
-        <div class="frame-wrapper">
-          <div class="frame-2">
-            <a href="#"><div class="text-wrapper-2">ABOUT</div></a>
-            <a href="mailto:management@supersoft.studio">
-              <div class="text-wrapper-2">CONTACT</div>
-            </a>
-          </div>
-        </div>
-      </div>
+      <main class="hero">
+        <img class="hero__logo" src="img/logo.webp" alt="Supersoft" width="636" height="900" />
+        <p class="hero__tag">Events · Musik · Community</p>
+      </main>
+
+      <section class="news">
+        <p class="news__label">Next up</p>
+        <p class="news__text">
+          Für aktuelle Termine und News
+          <a href="https://www.instagram.com/suuupersoft/" target="_blank" rel="noopener">folgt uns auf Instagram</a>.
+        </p>
+      </section>
+
+      <section class="contact">
+        <a class="contact__link" href="https://www.instagram.com/suuupersoft/" target="_blank" rel="noopener">Insta</a>
+        <a class="contact__link" href="mailto:management@supersoft.studio">Email</a>
+      </section>
 
       <footer class="footer">
-        <!-- Logo oben -->
-        <img class="logo" src="img/logo.png" alt="Supersoft Logo" />
-
-        <!-- Text darunter -->
-        <div class="text">
-          <div class="secret-santa">
-            SECRET SANTA<br />
-            18.12<br />
-            @TORTEBAR
-          </div>
-        </div>
+        <span class="footer__text">Supersoft</span>
+        <span class="footer__text">© 2026</span>
       </footer>
-
-      <div class="contact">
-        <a href="https://www.instagram.com/suuupersoft/" target="_blank">
-          <div class="insta">INSTA</div>
-        </a>
-
-        <a href="mailto:management@supersoft.studio">
-          <div class="email">EMAIL</div>
-        </a>
-      </div>
-
-      <div class="div">
-        <div class="text-wrapper">SUPERSOFT</div>
-        <div class="text-wrapper">©2025</div>
-      </div>
-
     </div>
   </body>
 </html>

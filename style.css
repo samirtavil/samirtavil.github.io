@@ -1,17 +1,13 @@
 /* =========================================================
-   SUPERSOFT — poster-inspired stylesheet
+   SUPERSOFT — poster stylesheet
    ========================================================= */
 
 :root {
-  --bg: #92998f;
-  --ink: rgba(20, 20, 20, 0.82);
-  --ink-soft: rgba(20, 20, 20, 0.6);
-  --line: rgba(20, 20, 20, 0.35);
+  --bg: #a3aba5;
+  /* Light ink + difference blend = dark ink on light paper, light ink on dark paper. */
+  --ink: rgb(250, 247, 241);
 
-  --font: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-display: "Archivo Black", var(--font);
-
-  --nav-gap: 32px;
+  --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --page-pad: 24px;
 }
 
@@ -29,11 +25,15 @@ body {
   font-family: var(--font);
   color: var(--ink);
   background-color: var(--bg);
-  background-image: url("img/background.webp");
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+}
+
+/* Fixed layer instead of background-attachment: fixed, which iOS Safari ignores. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url("img/background.webp") center top / cover no-repeat;
 }
 
 a {
@@ -41,22 +41,17 @@ a {
   text-decoration: none;
 }
 
-img {
-  max-width: 100%;
-  display: block;
+a:hover {
+  opacity: 0.55;
 }
 
 /* ===== Layout shell ===== */
 
 .page {
-  width: 100%;
   max-width: 1100px;
-  min-height: 100vh;
   margin: 0 auto;
-  padding: var(--page-pad) var(--page-pad) 32px;
-  display: flex;
-  flex-direction: column;
-  mix-blend-mode: multiply;
+  padding: 0 var(--page-pad);
+  mix-blend-mode: difference;
 }
 
 /* ===== Navigation ===== */
@@ -65,205 +60,159 @@ img {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--nav-gap);
-  padding: 8px 0 56px;
+  gap: 24px;
+  padding: 24px 0;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
 .nav__group {
   display: flex;
-  align-items: center;
-  gap: var(--nav-gap);
-}
-
-.nav__link {
-  font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  gap: 28px;
 }
 
 .nav__link[aria-current="page"] {
-  border-bottom: 3px solid var(--ink);
+  border-bottom: 2px solid currentColor;
 }
 
-.nav__link:hover {
-  opacity: 0.55;
-}
+/* ===== Poster column ===== */
 
-/* ===== Hero ===== */
-
-.hero {
-  flex: 1;
+.poster {
+  container-type: inline-size;
+  width: min(100%, 560px);
+  min-height: calc(100vh - 72px);
+  min-height: calc(100svh - 72px);
+  margin: 0 auto;
+  padding: 48px 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  text-align: center;
-  gap: 28px;
-  padding: 32px 0 64px;
-}
-
-.hero__wordmark {
-  font-family: var(--font-display);
-  color: var(--ink);
+  gap: 7cqi;
   text-transform: uppercase;
-  font-size: clamp(48px, 12vw, 96px);
-  letter-spacing: -0.01em;
-  line-height: 1;
-  margin: 0;
 }
 
-.hero__tag {
-  font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-/* ===== About page ===== */
-
-.about {
-  flex: 1;
+.oval {
   display: flex;
   align-items: center;
-  padding: 32px 0 64px;
-}
-
-.about__content {
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-.about__heading {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  font-size: clamp(40px, 10vw, 88px);
-  letter-spacing: -0.01em;
-  line-height: 1;
-  margin: 0 0 28px;
-}
-
-.about__text {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--ink-soft);
-  margin: 0 0 16px;
-}
-
-.about__text:last-child {
-  margin-bottom: 0;
-}
-
-.about__text a {
-  color: var(--ink);
-  border-bottom: 1px solid var(--ink);
-}
-
-.about__text a:hover {
-  opacity: 0.55;
-}
-
-/* ===== Oval badge (poster date/lineup mark) ===== */
-
-.badge-oval {
-  flex-shrink: 0;
-  width: 92px;
-  height: 60px;
-  border: 3px solid var(--ink);
+  justify-content: center;
+  border: solid currentColor;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.badge-oval__num {
-  font-family: var(--font-display);
-  font-size: 20px;
-  letter-spacing: 0.02em;
-}
-
-/* ===== News / next-up block ===== */
-
-.news {
+.oval--hero {
   width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 36px 0;
-  border-top: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  text-align: left;
+  aspect-ratio: 1.85;
+  border-width: 2.2cqi;
+  font-size: 24cqi;
+  letter-spacing: -0.02em;
 }
 
-.news__label {
-  font-family: var(--font-display);
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin: 0 0 8px;
+.oval--sm {
+  flex-shrink: 0;
+  width: 13cqi;
+  height: 7.4cqi;
+  border-width: 0.9cqi;
+  font-size: 4.6cqi;
+  letter-spacing: 0;
 }
 
-.news__text {
-  font-size: 18px;
-  font-weight: 600;
+.poster__title {
   margin: 0;
+  font-size: 12.86cqi;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.news__text a {
-  border-bottom: 1px solid var(--ink);
+.poster__title--about {
+  font-size: 22.28cqi;
 }
 
-.news__text a:hover {
-  opacity: 0.55;
+.poster__sub {
+  margin: 0;
+  font-size: 9.6cqi;
+  font-weight: 400;
+  line-height: 1.02;
 }
 
-/* ===== Contact ===== */
+/* Each line is tracked out so it spans the full column, like the flyer. */
+.line {
+  display: block;
+  white-space: nowrap;
+}
 
-.contact {
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 40px 0 8px;
+.line--a { letter-spacing: 0.274em; margin-right: -0.274em; }
+.line--b { letter-spacing: 0.528em; margin-right: -0.528em; }
+.line--c { letter-spacing: 0.533em; margin-right: -0.533em; }
+.line--d { letter-spacing: 0.637em; margin-right: -0.637em; }
+
+.poster__label {
+  margin: 0;
+  font-size: 9.6cqi;
+  font-weight: 400;
+  letter-spacing: 0.572em;
+  margin-right: -0.572em;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 4.5cqi;
+}
+
+.list a {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  font-size: 8.6cqi;
+  font-weight: 400;
+  letter-spacing: 0.2em;
 }
 
-.contact__link {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  font-size: clamp(28px, 6vw, 48px);
-  letter-spacing: -0.01em;
+.poster__note {
+  margin: 0;
+  font-size: max(12px, 3.2cqi);
+  letter-spacing: 0.2em;
 }
 
-.contact__link:hover {
-  opacity: 0.55;
+/* ===== About text ===== */
+
+.prose {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 0 0 30vh;
+  font-size: 19px;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+}
+
+.prose p {
+  margin: 0 0 1.2em;
+}
+
+.prose a {
+  border-bottom: 1px solid currentColor;
 }
 
 /* ===== Footer ===== */
 
 .footer {
-  margin-top: auto;
-  width: 100%;
-  padding-top: 32px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   gap: 16px;
-}
-
-.footer__text {
-  font-family: var(--font-display);
+  padding: 32px 0;
   font-size: 12px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--ink-soft);
 }
 
 /* ===== Responsive ===== */
@@ -271,33 +220,18 @@ img {
 @media (max-width: 640px) {
   :root {
     --page-pad: 20px;
-    --nav-gap: 20px;
   }
 
-  .nav {
-    padding-bottom: 40px;
+  .nav,
+  .footer {
+    font-size: 11px;
   }
 
-  .nav__link {
-    font-size: 12px;
+  .nav__group {
+    gap: 18px;
   }
 
-  .hero {
-    padding-bottom: 48px;
-  }
-
-  .hero__wordmark {
-    font-size: clamp(36px, 14vw, 64px);
-  }
-
-  .news {
-    text-align: center;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .badge-oval {
-    width: 84px;
-    height: 56px;
+  .prose {
+    font-size: 17px;
   }
 }

@@ -45,10 +45,7 @@
       float falloff = exp(-(r * r) / (240.0 * 240.0));
       w += (d / max(r, 0.001)) * sin(r * 0.05 - t * 2.5) * 6.0 * falloff * u_force;
 
-      // Faint pixelation right at the pointer.
       vec2 g = q + w;
-      float block = floor((1.0 - smoothstep(30.0, 160.0, r)) * u_force * 2.0) * 2.0;
-      if (block > 1.0) g = (floor(g / block) + 0.5) * block;
 
       // Cover, anchored top like the CSS fallback, with a margin larger than the
       // maximum displacement so the waves never sample past the image edge.

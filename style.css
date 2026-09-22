@@ -3,11 +3,12 @@
    ========================================================= */
 
 :root {
-  --bg: #f4f3f6;
-  --ink: #1f1f1f;
-  --ink-soft: rgba(31, 31, 31, 0.6);
-  --line: rgba(31, 31, 31, 0.15);
+  --bg: #92998f;
+  --ink: #1a1a1a;
+  --ink-soft: rgba(26, 26, 26, 0.65);
+  --line: rgba(26, 26, 26, 0.2);
   --accent: #d1665c;
+  --halo: rgba(233, 236, 227, 0.9);
 
   --font: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-display: "Archivo Black", var(--font);
@@ -30,11 +31,12 @@ body {
   font-family: var(--font);
   color: var(--ink);
   background-color: var(--bg);
-  background-image: url("img/gradient.webp");
+  background-image: url("img/background.webp");
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  text-shadow: 0 0 14px var(--halo), 0 0 3px var(--halo);
 }
 
 a {
@@ -103,9 +105,14 @@ img {
   padding: 32px 0 64px;
 }
 
-.hero__logo {
-  width: 100%;
-  max-width: 260px;
+.hero__wordmark {
+  font-family: var(--font-display);
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: clamp(48px, 12vw, 96px);
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin: 0;
 }
 
 .hero__tag {
@@ -283,8 +290,8 @@ img {
     padding-bottom: 48px;
   }
 
-  .hero__logo {
-    max-width: 180px;
+  .hero__wordmark {
+    font-size: clamp(36px, 14vw, 64px);
   }
 
   .news {

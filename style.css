@@ -4,11 +4,9 @@
 
 :root {
   --bg: #92998f;
-  --ink: #1a1a1a;
-  --ink-soft: rgba(26, 26, 26, 0.65);
-  --line: rgba(26, 26, 26, 0.2);
-  --accent: #d1665c;
-  --halo: rgba(233, 236, 227, 0.9);
+  --ink: rgba(20, 20, 20, 0.82);
+  --ink-soft: rgba(20, 20, 20, 0.6);
+  --line: rgba(20, 20, 20, 0.35);
 
   --font: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-display: "Archivo Black", var(--font);
@@ -36,7 +34,6 @@ body {
   background-position: center top;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  text-shadow: 0 0 14px var(--halo), 0 0 3px var(--halo);
 }
 
 a {
@@ -89,7 +86,7 @@ img {
 }
 
 .nav__link:hover {
-  color: var(--accent);
+  opacity: 0.55;
 }
 
 /* ===== Hero ===== */
@@ -107,7 +104,7 @@ img {
 
 .hero__wordmark {
   font-family: var(--font-display);
-  color: var(--accent);
+  color: var(--ink);
   text-transform: uppercase;
   font-size: clamp(48px, 12vw, 96px);
   letter-spacing: -0.01em;
@@ -163,8 +160,7 @@ img {
 }
 
 .about__text a:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  opacity: 0.55;
 }
 
 /* ===== Oval badge (poster date/lineup mark) ===== */
@@ -222,8 +218,7 @@ img {
 }
 
 .news__text a:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  opacity: 0.55;
 }
 
 /* ===== Contact ===== */
@@ -247,7 +242,7 @@ img {
 }
 
 .contact__link:hover {
-  color: var(--accent);
+  opacity: 0.55;
 }
 
 /* ===== Footer ===== */

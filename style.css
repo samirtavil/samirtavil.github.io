@@ -80,7 +80,7 @@ a:hover {
 
 .poster {
   container-type: inline-size;
-  width: min(100%, 560px);
+  width: min(80%, 420px);
   min-height: calc(100vh - 72px);
   min-height: calc(100svh - 72px);
   margin: 0 auto;
@@ -187,7 +187,7 @@ a:hover {
 /* ===== About text ===== */
 
 .prose {
-  width: min(100%, 560px);
+  width: min(80%, 420px);
   margin: 0 auto;
   padding: 0 0 30vh;
   font-size: 19px;

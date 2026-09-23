@@ -39,7 +39,7 @@
     uniform float u_dpr;
 
     const float CELL = 4.0;
-    const float TYPE_CELL = 1.7;
+    const float TYPE_CELL = 2.2;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
     // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
@@ -112,8 +112,9 @@
       return cover;
     }
 
-    // The type plate: a fine 45 degree screen fed by the type layer. Even at full coverage the
-    // dots stay separate, so paper shows through the letters.
+    // The type plate: a fine 45 degree screen fed by the type layer, printed at full ink.
+    // Dots grow almost solid, but some drop out in clumps, so letters look speckled like
+    // worn print rather than faded.
     float typePlate(vec2 g) {
       mat2 rot = mat2(0.7071, 0.7071, -0.7071, 0.7071);
       mat2 inv = mat2(0.7071, -0.7071, 0.7071, 0.7071);
@@ -130,7 +131,10 @@
         vec2 center = cell + 0.5 + (hash22(cell + 91.0) - 0.5) * 0.12;
         vec2 uv = clamp((inv * (center * TYPE_CELL) - u_scroll) / u_view, 0.0, 1.0);
         float amount = smoothstep(0.1, 0.6, texture2D(u_ink, uv).a);
-        float radius = 0.46 * sqrt(amount);
+        float radius = mix(0.56 * sqrt(amount), 0.64, smoothstep(0.8, 1.0, amount));
+        // Missing dots: a clumpy noise field sets how many drop out in each area.
+        float gaps = 0.12 + 0.3 * smoothstep(0.35, 0.8, noise(center * 0.18 + 5.0));
+        radius *= step(gaps, hash22(cell + 131.0).x);
         float dist = length(v - center) * (1.0 + rough);
         cover = max(cover, 1.0 - smoothstep(radius - soft, radius + soft, dist));
       }
@@ -167,7 +171,7 @@
 
       // Type follows the same wave, at a third of its strength so letters stay whole.
       float type = typePlate(q + w * 0.35);
-      col *= mix(vec3(1.0), BLACK, type * 0.85);
+      col *= mix(vec3(1.0), BLACK, type);
 
       gl_FragColor = vec4(col, 1.0);
     }

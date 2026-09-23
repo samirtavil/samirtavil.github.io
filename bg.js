@@ -2,8 +2,9 @@
 // The background image and the page's type, ovals and rules are painted into one
 // composite (positions read from the real DOM). A WebGL pass then screens that composite
 // like offset print: cyan, magenta, yellow and black dot grids on paper, each dot taking
-// one ink amount from its centre, with rough edges, ink spread and paper grain. Slow
-// waves shift where the dots sample, so the content drifts with them. The DOM stays in
+// one ink amount from its centre, with rough edges, ink spread and paper grain. The
+// screens are anchored to the document, so they scroll with the page like a printed
+// sheet and dots keep their colour. Slow waves shift where the dots sample. The DOM stays in
 // place, transparent, for links, selection and screen readers. Without WebGL the plain
 // page stays visible.
 (() => {
@@ -33,6 +34,7 @@
     uniform sampler2D u_comp;
     uniform vec2 u_res;
     uniform vec2 u_view;
+    uniform vec2 u_scroll;
     uniform float u_dpr;
     uniform float u_time;
 
@@ -95,7 +97,7 @@
         vec2 rnd = hash22(cell + seed);
         vec2 center = cell + 0.5 + (rnd - 0.5) * 0.16;
         vec2 centerG = inv * (center * CELL);
-        float amount = dot(cmyk(texture2D(u_comp, clamp(centerG / u_view, 0.0, 1.0)).rgb), mask);
+        float amount = dot(cmyk(texture2D(u_comp, clamp((centerG - u_scroll) / u_view, 0.0, 1.0)).rgb), mask);
         vec2 rnd2 = hash22(cell + seed + 7.0);
         // Slightly under the area-true 0.564 to make up for the soft, spreading rim.
         float radius = 0.53 * sqrt(amount) * (0.88 + 0.24 * rnd2.x);
@@ -108,7 +110,8 @@
 
     void main() {
       vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
-      vec2 q = p / u_dpr;
+      // Document coordinates: screens, waves and grain travel with the page.
+      vec2 q = p / u_dpr + u_scroll;
       float t = u_time;
 
       // Shared wave: square and triangle generators shift the screens in fields, slowly.
@@ -127,7 +130,7 @@
       float y = ink(q + wy, 1.571, 41.0, vec4(0.0, 0.0, 1.0, 0.0));
       float k = ink(q + w, 0.785, 63.0, vec4(0.0, 0.0, 0.0, 1.0));
 
-      float grain = hash22(floor(p)).x - 0.5;
+      float grain = hash22(floor(q * u_dpr)).x - 0.5;
       vec3 col = PAPER * (1.0 + grain * 0.05);
       col *= mix(vec3(1.0), CYAN, c);
       col *= mix(vec3(1.0), MAGENTA, m);
@@ -164,7 +167,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_view", "u_dpr", "u_time"]) {
+  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr", "u_time"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -268,14 +271,16 @@
       comp.height = compH;
     }
 
-    // Background: cover, anchored top, like the CSS fallback.
-    const scale = Math.max(viewW / background.width, viewH / background.height);
+    // Background: covers the whole document and scrolls with it, like the CSS fallback.
+    const docW = document.documentElement.clientWidth;
+    const docH = Math.max(document.documentElement.scrollHeight, viewH);
+    const scale = Math.max(docW / background.width, docH / background.height);
     const bw = background.width * scale;
     const bh = background.height * scale;
     ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.globalAlpha = 1;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(background, (viewW - bw) / 2, 0, bw, bh);
+    ctx.drawImage(background, (docW - bw) / 2 - sx, -sy, bw, bh);
 
     let font = "";
     for (const g of glyphs) {
@@ -350,6 +355,7 @@
 
     gl.uniform2f(u.u_res, canvas.width, canvas.height);
     gl.uniform2f(u.u_view, viewW, viewH);
+    gl.uniform2f(u.u_scroll, paintedScroll.x, paintedScroll.y);
     gl.uniform1f(u.u_dpr, dpr);
     gl.uniform1f(u.u_time, reduceMotion ? 0 : (now - start) / 1000);
     gl.drawArrays(gl.TRIANGLES, 0, 3);

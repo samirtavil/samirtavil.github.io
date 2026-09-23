@@ -1,14 +1,15 @@
-// Animated background, rebuilt from the Photoshop smart filters in the same order:
-// color halftone -> add noise -> wave. The waves drift slowly and ripple around the pointer.
-// If WebGL is unavailable, the static CSS background (body::before) stays visible.
+// Print screen over the whole page: a fixed layer of paper with round holes. Everything
+// underneath (background image and type) only shows through the dots, so it reads as one
+// printed surface. Square/triangle waves shift the dot grid slowly (like Photoshop's Wave
+// filter), and the pointer adds a soft ripple. Without WebGL the page simply shows unscreened.
 (() => {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = document.createElement("canvas");
-  canvas.className = "bg-canvas";
+  canvas.className = "dot-screen";
   canvas.setAttribute("aria-hidden", "true");
 
-  const gl = canvas.getContext("webgl", { alpha: false, antialias: false });
+  const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false });
   if (!gl) return;
 
   const vertexSrc = `
@@ -22,15 +23,15 @@
     #else
     precision mediump float;
     #endif
-    uniform sampler2D u_tex;
     uniform vec2 u_res;
-    uniform vec2 u_tex_size;
     uniform float u_dpr;
     uniform float u_time;
     uniform vec2 u_mouse;
     uniform float u_force;
 
-    const float CELL = 2.4;
+    const float CELL = 3.0;
+    const float RADIUS = 0.46;
+    const vec3 PAPER = vec3(0.84, 0.863, 0.84);
 
     float hash(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -41,38 +42,11 @@
     float tri(float x) { return asin(sin(x)) * 0.6366; }
     float sq(float x) { return sign(sin(x)); }
 
-    // Cover, anchored top like the CSS fallback, with a margin larger than the
-    // maximum wave offset so nothing samples past the image edge.
-    vec3 tone(vec2 g) {
-      vec2 view = u_res / u_dpr;
-      float margin = 26.0;
-      vec2 area = view + 2.0 * margin;
-      float scale = max(area.x / u_tex_size.x, area.y / u_tex_size.y);
-      vec2 cover = u_tex_size * scale;
-      vec2 offset = vec2((view.x - cover.x) * 0.5, -margin);
-      return texture2D(u_tex, clamp((g - offset) / cover, 0.0, 1.0)).rgb;
-    }
-
-    // One channel of Photoshop's color halftone: a rotated grid of dots whose
-    // size follows the channel's brightness at the dot's center.
-    float halftone(vec2 g, float angle, vec3 channel) {
-      float s = sin(angle);
-      float c = cos(angle);
-      vec2 v = mat2(c, s, -s, c) * g / CELL;
-      vec2 center = floor(v) + 0.5;
-      vec2 centerG = mat2(c, -s, s, c) * (center * CELL);
-      // Dot area equals the channel value, so the average tone matches the image.
-      float radius = sqrt(dot(tone(centerG), channel) / 3.14159);
-      float aa = 1.0 / (CELL * u_dpr);
-      return 1.0 - smoothstep(radius - aa, radius + aa, length(v - center));
-    }
-
     void main() {
       vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
       vec2 q = p / u_dpr;
       float t = u_time;
 
-      // Wave: square and triangle generators shift the dots in fields, drifting slowly.
       vec2 w;
       w.x = sq(q.y * 0.011 + t * 0.20) * 2.2 + tri(q.y * 0.031 + q.x * 0.006 - t * 0.33) * 1.6;
       w.y = sq(q.x * 0.009 - t * 0.16) * 2.0 + tri(q.x * 0.027 + q.y * 0.005 + t * 0.27) * 1.4;
@@ -82,21 +56,16 @@
       float falloff = exp(-(r * r) / (240.0 * 240.0));
       w += (d / max(r, 0.001)) * sin(r * 0.05 - t * 2.5) * 6.0 * falloff * u_force;
 
+      // 45-degree screen, like the black plate in print.
       vec2 g = q + w;
+      vec2 v = mat2(0.7071, 0.7071, -0.7071, 0.7071) * g / CELL;
+      vec2 cell = floor(v);
+      float radius = RADIUS + (hash(cell) - 0.5) * 0.1;
+      float aa = 1.0 / (CELL * u_dpr);
+      float hole = 1.0 - smoothstep(radius - aa, radius + aa, length(v - cell - 0.5));
 
-      vec3 dots = vec3(
-        halftone(g, 1.885, vec3(1.0, 0.0, 0.0)),
-        halftone(g, 2.827, vec3(0.0, 1.0, 0.0)),
-        halftone(g, 1.571, vec3(0.0, 0.0, 1.0))
-      );
-      // Mostly dots, a little plain tone to keep it calm.
-      vec3 col = mix(tone(g), dots, 0.85);
-
-      // Add noise: fixed per spot, so it travels with the waves instead of flickering.
-      vec2 cellPx = floor(g * u_dpr);
-      col += (vec3(hash(cellPx), hash(cellPx + 17.1), hash(cellPx + 31.7)) - 0.5) * 0.08;
-
-      gl_FragColor = vec4(col, 1.0);
+      float paper = 1.0 - hole;
+      gl_FragColor = vec4(PAPER * paper, paper);
     }
   `;
 
@@ -126,7 +95,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_tex_size", "u_dpr", "u_time", "u_mouse", "u_force"]) {
+  for (const name of ["u_res", "u_dpr", "u_time", "u_mouse", "u_force"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -179,53 +148,27 @@
   canvas.addEventListener("webglcontextlost", (e) => {
     e.preventDefault();
     running = false;
-    canvas.classList.remove("is-ready");
+    canvas.remove();
   });
 
-  const img = new Image();
-  img.onload = () => {
-    // The halftone needs the image's tones, not its pixel noise, so feed it a softened copy.
-    const toneCanvas = document.createElement("canvas");
-    toneCanvas.width = Math.round(img.naturalWidth / 3);
-    toneCanvas.height = Math.round(img.naturalHeight / 3);
-    const ctx = toneCanvas.getContext("2d");
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, 0, 0, toneCanvas.width, toneCanvas.height);
+  document.body.append(canvas);
+  resize();
 
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, toneCanvas);
-    gl.uniform2f(u.u_tex_size, toneCanvas.width, toneCanvas.height);
+  if (reduceMotion) {
+    draw(start);
+    window.addEventListener("resize", () => { resize(); draw(start); });
+    return;
+  }
 
-    document.body.prepend(canvas);
-    resize();
+  window.addEventListener("resize", resize);
+  window.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY), { passive: true });
+  window.addEventListener("touchmove", (e) => {
+    const touch = e.touches[0];
+    if (touch) onMove(touch.clientX, touch.clientY);
+  }, { passive: true });
+  document.documentElement.addEventListener("pointerleave", () => { present = false; });
+  window.addEventListener("touchend", () => { present = false; }, { passive: true });
 
-    if (reduceMotion) {
-      // One still frame of the dot texture, no movement.
-      draw(start);
-      window.addEventListener("resize", () => { resize(); draw(start); });
-      canvas.classList.add("is-ready");
-      return;
-    }
-
-    window.addEventListener("resize", resize);
-    window.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY), { passive: true });
-    window.addEventListener("touchmove", (e) => {
-      const touch = e.touches[0];
-      if (touch) onMove(touch.clientX, touch.clientY);
-    }, { passive: true });
-    document.documentElement.addEventListener("pointerleave", () => { present = false; });
-    window.addEventListener("touchend", () => { present = false; }, { passive: true });
-
-    running = true;
-    requestAnimationFrame((now) => {
-      loop(now);
-      canvas.classList.add("is-ready");
-    });
-  };
-  img.src = "img/background.webp";
+  running = true;
+  requestAnimationFrame(loop);
 })();

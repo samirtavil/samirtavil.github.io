@@ -36,20 +36,15 @@ body::before {
   background: url("img/background.webp") center top / cover no-repeat;
 }
 
-.bg-canvas {
+/* Print screen laid over the whole page (see bg.js). */
+.dot-screen {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
+  z-index: 10;
   display: block;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-.bg-canvas.is-ready {
-  opacity: 1;
 }
 
 a {
@@ -67,8 +62,6 @@ a:hover {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 var(--page-pad);
-  /* Multiply like riso ink: the colour stays, the dots show through. */
-  mix-blend-mode: multiply;
 }
 
 /* ===== Navigation ===== */
@@ -80,6 +73,7 @@ a:hover {
   gap: 24px;
   padding: 24px 0;
   font-size: 13px;
+  font-weight: 650;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
@@ -200,6 +194,7 @@ a:hover {
 .poster__note {
   margin: 0;
   font-size: max(12px, 3.2cqi);
+  font-weight: 650;
   letter-spacing: 0.2em;
 }
 
@@ -210,6 +205,7 @@ a:hover {
   margin: 0 auto;
   padding: 0 0 30vh;
   font-size: 19px;
+  font-weight: 600;
   line-height: 1.55;
   letter-spacing: 0.01em;
 }
@@ -230,6 +226,7 @@ a:hover {
   gap: 16px;
   padding: 32px 0;
   font-size: 12px;
+  font-weight: 650;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }

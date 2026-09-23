@@ -3,7 +3,7 @@
    ========================================================= */
 
 :root {
-  --bg: #e6e9e4;
+  --bg: #a3aba5;
   --pink: rgb(244, 44, 132);
   --blue: rgb(88, 72, 200);
 
@@ -34,7 +34,6 @@ body::before {
   inset: 0;
   z-index: -1;
   background: url("img/background.webp") center top / cover no-repeat;
-  opacity: 0.55;
 }
 
 .bg-canvas {

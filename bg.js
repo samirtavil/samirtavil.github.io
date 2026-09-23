@@ -50,9 +50,7 @@
       float scale = max(area.x / u_tex_size.x, area.y / u_tex_size.y);
       vec2 cover = u_tex_size * scale;
       vec2 offset = vec2((view.x - cover.x) * 0.5, -margin);
-      vec3 c = texture2D(u_tex, clamp((g - offset) / cover, 0.0, 1.0)).rgb;
-      // Lift the darks so the coloured foreground has room to stand out.
-      return 1.0 - (1.0 - c) * 0.6;
+      return texture2D(u_tex, clamp((g - offset) / cover, 0.0, 1.0)).rgb;
     }
 
     // One channel of Photoshop's color halftone: a rotated grid of dots whose
@@ -91,8 +89,8 @@
         halftone(g, 2.827, vec3(0.0, 1.0, 0.0)),
         halftone(g, 1.571, vec3(0.0, 0.0, 1.0))
       );
-      // Soften the dots against the plain tone so the texture stays calm behind text.
-      vec3 col = mix(tone(g), dots, 0.6);
+      // Mostly dots, a little plain tone to keep it calm.
+      vec3 col = mix(tone(g), dots, 0.85);
 
       // Add noise: fixed per spot, so it travels with the waves instead of flickering.
       vec2 cellPx = floor(g * u_dpr);

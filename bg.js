@@ -31,9 +31,10 @@
     uniform float u_force;
 
     const float CELL = 3.0;
-    const float RADIUS = 0.5;
+    // Kept below 0.5 so no dot is clipped by its cell, which draws grid lines.
+    const float RADIUS = 0.43;
     // How much of the page still shows between the dots (1.0 would be pure paper).
-    const float GAP = 0.9;
+    const float GAP = 0.8;
 
     float hash(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -42,7 +43,8 @@
     }
 
     float tri(float x) { return asin(sin(x)) * 0.6366; }
-    float sq(float x) { return sign(sin(x)); }
+    // Square wave with a short ramp instead of a hard step, so field edges don't draw a line.
+    float sq(float x) { return clamp(sin(x) * 4.0, -1.0, 1.0); }
 
     // One channel of the colour halftone: a rotated grid of round dots.
     float dotScreen(vec2 g, float angle, float seed) {
@@ -50,7 +52,7 @@
       float c = cos(angle);
       vec2 v = mat2(c, s, -s, c) * g / CELL;
       vec2 cell = floor(v);
-      float radius = RADIUS + (hash(cell + seed) - 0.5) * 0.12;
+      float radius = RADIUS + (hash(cell + seed) - 0.5) * 0.06;
       float aa = 1.0 / (CELL * u_dpr);
       return 1.0 - smoothstep(radius - aa, radius + aa, length(v - cell - 0.5));
     }

@@ -1,7 +1,8 @@
-// Animated background: the paper texture drifts in slow waves and ripples softly around the pointer.
-// If WebGL or motion is unavailable, the static CSS background (body::before) stays visible.
+// Animated background, rebuilt from the Photoshop smart filters in the same order:
+// color halftone -> add noise -> wave. The waves drift slowly and ripple around the pointer.
+// If WebGL is unavailable, the static CSS background (body::before) stays visible.
 (() => {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = document.createElement("canvas");
   canvas.className = "bg-canvas";
@@ -29,17 +30,53 @@
     uniform vec2 u_mouse;
     uniform float u_force;
 
+    const float CELL = 2.4;
+
+    float hash(vec2 p) {
+      vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+      p3 += dot(p3, p3.yzx + 33.33);
+      return fract((p3.x + p3.y) * p3.z);
+    }
+
+    float tri(float x) { return asin(sin(x)) * 0.6366; }
+    float sq(float x) { return sign(sin(x)); }
+
+    // Cover, anchored top like the CSS fallback, with a margin larger than the
+    // maximum wave offset so nothing samples past the image edge.
+    vec3 tone(vec2 g) {
+      vec2 view = u_res / u_dpr;
+      float margin = 26.0;
+      vec2 area = view + 2.0 * margin;
+      float scale = max(area.x / u_tex_size.x, area.y / u_tex_size.y);
+      vec2 cover = u_tex_size * scale;
+      vec2 offset = vec2((view.x - cover.x) * 0.5, -margin);
+      return texture2D(u_tex, clamp((g - offset) / cover, 0.0, 1.0)).rgb;
+    }
+
+    // One channel of Photoshop's color halftone: a rotated grid of dots whose
+    // size follows the channel's brightness at the dot's center.
+    float halftone(vec2 g, float angle, vec3 channel) {
+      float s = sin(angle);
+      float c = cos(angle);
+      vec2 v = mat2(c, s, -s, c) * g / CELL;
+      vec2 center = floor(v) + 0.5;
+      vec2 centerG = mat2(c, -s, s, c) * (center * CELL);
+      // Dot area equals the channel value, so the average tone matches the image.
+      float radius = sqrt(dot(tone(centerG), channel) / 3.14159);
+      float aa = 1.0 / (CELL * u_dpr);
+      return 1.0 - smoothstep(radius - aa, radius + aa, length(v - center));
+    }
+
     void main() {
       vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
       vec2 q = p / u_dpr;
       float t = u_time;
 
-      // Slow, low drift so the texture breathes without pulling focus.
+      // Wave: square and triangle generators shift the dots in fields, drifting slowly.
       vec2 w;
-      w.x = sin(q.y * 0.016 + t * 0.35) * 2.5 + sin(q.y * 0.043 + q.x * 0.010 - t * 0.55) * 1.2;
-      w.y = cos(q.x * 0.014 + t * 0.28) * 2.5 + sin(q.x * 0.039 + q.y * 0.008 + t * 0.45) * 1.0;
+      w.x = sq(q.y * 0.011 + t * 0.20) * 2.2 + tri(q.y * 0.031 + q.x * 0.006 - t * 0.33) * 1.6;
+      w.y = sq(q.x * 0.009 - t * 0.16) * 2.0 + tri(q.x * 0.027 + q.y * 0.005 + t * 0.27) * 1.4;
 
-      // Gentle ripple around the pointer.
       vec2 d = q - u_mouse;
       float r = length(d);
       float falloff = exp(-(r * r) / (240.0 * 240.0));
@@ -47,16 +84,19 @@
 
       vec2 g = q + w;
 
-      // Cover, anchored top like the CSS fallback, with a margin larger than the
-      // maximum displacement so the waves never sample past the image edge.
-      float margin = 26.0 * u_dpr;
-      vec2 area = u_res + 2.0 * margin;
-      float scale = max(area.x / u_tex_size.x, area.y / u_tex_size.y);
-      vec2 cover = u_tex_size * scale;
-      vec2 offset = vec2((u_res.x - cover.x) * 0.5, -margin);
-      vec2 uv = (g * u_dpr - offset) / cover;
+      vec3 dots = vec3(
+        halftone(g, 1.885, vec3(1.0, 0.0, 0.0)),
+        halftone(g, 2.827, vec3(0.0, 1.0, 0.0)),
+        halftone(g, 1.571, vec3(0.0, 0.0, 1.0))
+      );
+      // Soften the dots against the plain tone so the texture stays calm behind text.
+      vec3 col = mix(tone(g), dots, 0.6);
 
-      gl_FragColor = texture2D(u_tex, clamp(uv, 0.0, 1.0));
+      // Add noise: fixed per spot, so it travels with the waves instead of flickering.
+      vec2 cellPx = floor(g * u_dpr);
+      col += (vec3(hash(cellPx), hash(cellPx + 17.1), hash(cellPx + 31.7)) - 0.5) * 0.08;
+
+      gl_FragColor = vec4(col, 1.0);
     }
   `;
 
@@ -92,7 +132,7 @@
 
   let dpr = 1;
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = canvas.getBoundingClientRect();
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
@@ -112,20 +152,9 @@
     target = 1;
   }
 
-  window.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY), { passive: true });
-  window.addEventListener("touchmove", (e) => {
-    const touch = e.touches[0];
-    if (touch) onMove(touch.clientX, touch.clientY);
-  }, { passive: true });
-  document.documentElement.addEventListener("pointerleave", () => { present = false; });
-  window.addEventListener("touchend", () => { present = false; }, { passive: true });
-
-  let running = false;
   const start = performance.now();
 
-  function frame(now) {
-    if (!running) return;
-
+  function draw(now) {
     smooth.x += (pointer.x - smooth.x) * 0.12;
     smooth.y += (pointer.y - smooth.y) * 0.12;
     // Moving the pointer kicks the ripple up; resting over the page keeps a faint one.
@@ -138,8 +167,13 @@
     gl.uniform2f(u.u_mouse, smooth.x, smooth.y);
     gl.uniform1f(u.u_force, force);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
 
-    requestAnimationFrame(frame);
+  let running = false;
+  function loop(now) {
+    if (!running) return;
+    draw(now);
+    requestAnimationFrame(loop);
   }
 
   canvas.addEventListener("webglcontextlost", (e) => {
@@ -150,22 +184,46 @@
 
   const img = new Image();
   img.onload = () => {
+    // The halftone needs the image's tones, not its pixel noise, so feed it a softened copy.
+    const toneCanvas = document.createElement("canvas");
+    toneCanvas.width = Math.round(img.naturalWidth / 3);
+    toneCanvas.height = Math.round(img.naturalHeight / 3);
+    const ctx = toneCanvas.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, toneCanvas.width, toneCanvas.height);
+
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
-    gl.uniform2f(u.u_tex_size, img.naturalWidth, img.naturalHeight);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, toneCanvas);
+    gl.uniform2f(u.u_tex_size, toneCanvas.width, toneCanvas.height);
 
     document.body.prepend(canvas);
     resize();
+
+    if (reduceMotion) {
+      // One still frame of the dot texture, no movement.
+      draw(start);
+      window.addEventListener("resize", () => { resize(); draw(start); });
+      canvas.classList.add("is-ready");
+      return;
+    }
+
     window.addEventListener("resize", resize);
+    window.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY), { passive: true });
+    window.addEventListener("touchmove", (e) => {
+      const touch = e.touches[0];
+      if (touch) onMove(touch.clientX, touch.clientY);
+    }, { passive: true });
+    document.documentElement.addEventListener("pointerleave", () => { present = false; });
+    window.addEventListener("touchend", () => { present = false; }, { passive: true });
 
     running = true;
     requestAnimationFrame((now) => {
-      frame(now);
+      loop(now);
       canvas.classList.add("is-ready");
     });
   };

@@ -45,6 +45,7 @@ body::before {
   z-index: 10;
   display: block;
   pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 a {

@@ -1,7 +1,8 @@
-// Print screen over the whole page: a fixed layer of paper with round holes. Everything
-// underneath (background image and type) only shows through the dots, so it reads as one
-// printed surface. Square/triangle waves shift the dot grid slowly (like Photoshop's Wave
-// filter), and the pointer adds a soft ripple. Without WebGL the page simply shows unscreened.
+// Colour halftone over the whole page: a fixed layer with one rotated dot grid per RGB
+// channel, blended with screen, so background image and type are split into slightly
+// misregistered colour dots and read as one printed surface. Square/triangle waves shift the
+// grids slowly (like Photoshop's Wave filter), and the pointer adds a soft ripple.
+// Without WebGL the page simply shows unscreened.
 (() => {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -9,7 +10,7 @@
   canvas.className = "dot-screen";
   canvas.setAttribute("aria-hidden", "true");
 
-  const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: false });
+  const gl = canvas.getContext("webgl", { alpha: false, antialias: false });
   if (!gl) return;
 
   const vertexSrc = `
@@ -30,8 +31,9 @@
     uniform float u_force;
 
     const float CELL = 3.0;
-    const float RADIUS = 0.46;
-    const vec3 PAPER = vec3(0.84, 0.863, 0.84);
+    const float RADIUS = 0.5;
+    // How much of the page still shows between the dots (1.0 would be pure paper).
+    const float GAP = 0.9;
 
     float hash(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -42,11 +44,23 @@
     float tri(float x) { return asin(sin(x)) * 0.6366; }
     float sq(float x) { return sign(sin(x)); }
 
+    // One channel of the colour halftone: a rotated grid of round dots.
+    float dotScreen(vec2 g, float angle, float seed) {
+      float s = sin(angle);
+      float c = cos(angle);
+      vec2 v = mat2(c, s, -s, c) * g / CELL;
+      vec2 cell = floor(v);
+      float radius = RADIUS + (hash(cell + seed) - 0.5) * 0.12;
+      float aa = 1.0 / (CELL * u_dpr);
+      return 1.0 - smoothstep(radius - aa, radius + aa, length(v - cell - 0.5));
+    }
+
     void main() {
       vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
       vec2 q = p / u_dpr;
       float t = u_time;
 
+      // Shared wave: square and triangle generators shift the screen in fields.
       vec2 w;
       w.x = sq(q.y * 0.011 + t * 0.20) * 2.2 + tri(q.y * 0.031 + q.x * 0.006 - t * 0.33) * 1.6;
       w.y = sq(q.x * 0.009 - t * 0.16) * 2.0 + tri(q.x * 0.027 + q.y * 0.005 + t * 0.27) * 1.4;
@@ -56,16 +70,21 @@
       float falloff = exp(-(r * r) / (240.0 * 240.0));
       w += (d / max(r, 0.001)) * sin(r * 0.05 - t * 2.5) * 6.0 * falloff * u_force;
 
-      // 45-degree screen, like the black plate in print.
-      vec2 g = q + w;
-      vec2 v = mat2(0.7071, 0.7071, -0.7071, 0.7071) * g / CELL;
-      vec2 cell = floor(v);
-      float radius = RADIUS + (hash(cell) - 0.5) * 0.1;
-      float aa = 1.0 / (CELL * u_dpr);
-      float hole = 1.0 - smoothstep(radius - aa, radius + aa, length(v - cell - 0.5));
+      // Each channel is slightly out of register and wobbles on its own.
+      vec2 wr = w + vec2(0.6, 0.0) + vec2(tri(q.y * 0.050 + t * 0.40), tri(q.x * 0.050 - t * 0.30)) * 0.8;
+      vec2 wg = w + vec2(-0.4, 0.5) + vec2(tri(q.y * 0.047 - t * 0.35 + 2.0), tri(q.x * 0.052 + t * 0.33 + 1.0)) * 0.8;
+      vec2 wb = w + vec2(0.0, -0.6) + vec2(tri(q.y * 0.053 + t * 0.30 + 4.0), tri(q.x * 0.049 - t * 0.37 + 3.0)) * 0.8;
 
-      float paper = 1.0 - hole;
-      gl_FragColor = vec4(PAPER * paper, paper);
+      // Photoshop's default colour halftone angles for the three channels.
+      vec3 dots = vec3(
+        dotScreen(q + wr, 1.885, 0.0),
+        dotScreen(q + wg, 2.827, 17.0),
+        dotScreen(q + wb, 1.571, 41.0)
+      );
+
+      // Composited with mix-blend-mode: screen, so each channel of the page only
+      // shows inside its own dots and turns to paper between them.
+      gl_FragColor = vec4((1.0 - dots) * GAP, 1.0);
     }
   `;
 

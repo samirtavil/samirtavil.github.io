@@ -1,18 +1,16 @@
-// The page printed in two passes, drawn in WebGL.
-// 1. The background image is screened like offset print: cyan, magenta, yellow and black
-//    dot grids on paper, each dot taking one ink amount from its centre, with rough edges,
-//    ink spread and paper grain. Greys go mostly to the black plate, as a printer would.
-// 2. The type, ovals and rules (positions read from the real DOM) are printed on top as
-//    flat spot colours, without a screen, with slightly uneven ink density. The
-// screens are anchored to the document, so they scroll with the page like a printed
-// sheet and dots keep their colour. Slow waves shift where the dots sample. The DOM stays in
-// place, transparent, for links, selection and screen readers. Without WebGL the plain
-// page stays visible.
+// The page printed as a static CMYK halftone, drawn in WebGL.
+// The background image and the page's type, ovals and rules (positions read from the real
+// DOM) are screened together: cyan, magenta, yellow and black dot grids on paper, each dot
+// taking one ink amount from its centre, with rough edges, ink spread and paper grain.
+// Greys go mostly to the black plate, as a printer would, and the type overprints on the
+// black plate, so it is made of the same dots and multiplies with whatever is under it.
+// A fixed wave distortion shifts where the dots sample, like Photoshop's Wave filter. The
+// screens are anchored to the document, so the page scrolls like a printed sheet. The DOM
+// stays in place, transparent, for links, selection and screen readers. Without WebGL the
+// plain page stays visible.
 (() => {
   const page = document.querySelector(".page");
   if (!page) return;
-
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = document.createElement("canvas");
   canvas.className = "dot-screen";
@@ -38,16 +36,14 @@
     uniform vec2 u_view;
     uniform vec2 u_scroll;
     uniform float u_dpr;
-    uniform float u_time;
 
-    const float CELL = 3.2;
+    const float CELL = 4.0;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
-    // Inks as multipliers on the paper, close to ideal so the simple CMYK split keeps hues
-    // (real process magenta would turn the pink red).
+    // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
     const vec3 MAGENTA = vec3(1.0, 0.0, 0.9);
     const vec3 YELLOW = vec3(1.0, 0.97, 0.0);
-    const vec3 BLACK = vec3(0.12, 0.12, 0.12);
+    const vec3 BLACK = vec3(0.1, 0.1, 0.1);
 
     vec2 hash22(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
@@ -81,7 +77,7 @@
 
     // One ink's screen. Each dot takes the ink amount at its centre; dots vary a little in
     // size, place and density, and the four nearest cells are checked so neighbours can
-    // overlap without clipping.
+    // overlap without clipping. The type layer overprints on the black plate.
     float ink(vec2 g, float angle, float seed, vec4 mask) {
       float s = sin(angle);
       float c = cos(angle);
@@ -92,22 +88,27 @@
       vec2 f = v - base;
       vec2 dir = vec2(f.x < 0.5 ? -1.0 : 1.0, f.y < 0.5 ? -1.0 : 1.0);
       // Ink spread: a soft rim, plus a rough edge from noise in the paper.
-      float rough = (noise(g * 0.9 + seed) - 0.5) * 0.22 + (noise(g * 2.3 + seed * 1.7) - 0.5) * 0.1;
-      float soft = 0.07 + 1.0 / (CELL * u_dpr);
+      float rough = (noise(g * 0.7 + seed) - 0.5) * 0.22 + (noise(g * 1.8 + seed * 1.7) - 0.5) * 0.1;
+      float soft = 0.06 + 1.0 / (CELL * u_dpr);
       float cover = 0.0;
       for (int i = 0; i < 4; i++) {
         vec2 o = vec2((i == 1 || i == 3) ? dir.x : 0.0, i >= 2 ? dir.y : 0.0);
         vec2 cell = base + o;
         vec2 rnd = hash22(cell + seed);
         vec2 center = cell + 0.5 + (rnd - 0.5) * 0.16;
-        vec2 centerG = inv * (center * CELL);
-        float amount = dot(cmyk(texture2D(u_comp, clamp((centerG - u_scroll) / u_view, 0.0, 1.0)).rgb), mask);
+        vec2 uv = clamp((inv * (center * CELL) - u_scroll) / u_view, 0.0, 1.0);
+        float amount = dot(cmyk(texture2D(u_comp, uv).rgb), mask);
+        // Partly covered cells still print full dots, so thin strokes hold together.
+        float type = smoothstep(0.08, 0.5, texture2D(u_ink, uv).a) * mask.w;
+        amount = 1.0 - (1.0 - amount) * (1.0 - type);
         vec2 rnd2 = hash22(cell + seed + 7.0);
-        // Slightly under the area-true 0.564 to make up for the soft, spreading rim.
+        // Slightly under the area-true 0.564 to make up for the soft, spreading rim;
+        // near full coverage the dots grow into each other, like a solid in print.
         float radius = 0.53 * sqrt(amount) * (0.88 + 0.24 * rnd2.x);
+        radius = mix(radius, 0.7, smoothstep(0.8, 1.0, amount));
         float dist = length(v - center) * (1.0 + rough);
         float dot1 = 1.0 - smoothstep(radius - soft, radius + soft, dist);
-        cover = max(cover, dot1 * (0.86 + 0.14 * rnd2.y));
+        cover = max(cover, dot1 * (0.88 + 0.12 * rnd2.y));
       }
       return cover;
     }
@@ -116,17 +117,16 @@
       vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
       // Document coordinates: screens, waves and grain travel with the page.
       vec2 q = p / u_dpr + u_scroll;
-      float t = u_time;
 
-      // Shared wave: square and triangle generators shift the screens in fields, slowly.
+      // Fixed wave: square and triangle generators shift the screens in fields.
       vec2 w;
-      w.x = sq(q.y * 0.011 + t * 0.20) * 2.2 + tri(q.y * 0.031 + q.x * 0.006 - t * 0.33) * 1.6;
-      w.y = sq(q.x * 0.009 - t * 0.16) * 2.0 + tri(q.x * 0.027 + q.y * 0.005 + t * 0.27) * 1.4;
+      w.x = sq(q.y * 0.011) * 2.2 + tri(q.y * 0.031 + q.x * 0.006) * 1.6;
+      w.y = sq(q.x * 0.009 + 1.3) * 2.0 + tri(q.x * 0.027 + q.y * 0.005 + 0.7) * 1.4;
 
-      // Each plate is slightly out of register and wobbles on its own.
-      vec2 wc = w + vec2(0.4, 0.0) + vec2(tri(q.y * 0.050 + t * 0.40), tri(q.x * 0.050 - t * 0.30)) * 0.5;
-      vec2 wm = w + vec2(-0.3, 0.3) + vec2(tri(q.y * 0.047 - t * 0.35 + 2.0), tri(q.x * 0.052 + t * 0.33 + 1.0)) * 0.5;
-      vec2 wy = w + vec2(0.0, -0.4) + vec2(tri(q.y * 0.053 + t * 0.30 + 4.0), tri(q.x * 0.049 - t * 0.37 + 3.0)) * 0.5;
+      // Each plate is slightly out of register.
+      vec2 wc = w + vec2(0.5, 0.0) + vec2(tri(q.y * 0.050), tri(q.x * 0.050)) * 0.5;
+      vec2 wm = w + vec2(-0.4, 0.4) + vec2(tri(q.y * 0.047 + 2.0), tri(q.x * 0.052 + 1.0)) * 0.5;
+      vec2 wy = w + vec2(0.0, -0.5) + vec2(tri(q.y * 0.053 + 4.0), tri(q.x * 0.049 + 3.0)) * 0.5;
 
       // Photoshop's default CMYK halftone angles: C 108, M 162, Y 90, K 45 degrees.
       float c = ink(q + wc, 1.885, 0.0, vec4(1.0, 0.0, 0.0, 0.0));
@@ -140,11 +140,6 @@
       col *= mix(vec3(1.0), MAGENTA, m);
       col *= mix(vec3(1.0), YELLOW, y);
       col *= mix(vec3(1.0), BLACK, k);
-
-      // Spot colour pass: flat ink over the halftone, moved by the same slow wave.
-      vec4 spot = texture2D(u_ink, clamp((q + w - u_scroll) / u_view, 0.0, 1.0));
-      float density = 0.9 + 0.1 * noise(q * 0.35 + 5.0);
-      col = mix(col, spot.rgb, spot.a * density);
 
       gl_FragColor = vec4(col, 1.0);
     }
@@ -176,7 +171,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr", "u_time"]) {
+  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -195,13 +190,14 @@
   gl.uniform1i(gl.getUniformLocation(program, "u_comp"), 0);
   gl.uniform1i(gl.getUniformLocation(program, "u_ink"), 1);
 
-  // ---------- Layers: background for the screen, page content as spot ink ----------
+  // ---------- Layers: background tones and type coverage, both fed to the screen ----------
 
-  // The background is painted at half resolution, about one texel per dot.
-  const BG_SCALE = 0.5;
+  // Painted at half resolution, a few texels per dot: thin strokes still give partial
+  // coverage and so smaller dots, instead of falling between dot centres.
+  const SCALE = 0.5;
   const comp = document.createElement("canvas");
   const bctx = comp.getContext("2d");
-  // Content is painted at device resolution on a transparent layer: alpha is ink coverage.
+  // Type layer: transparent, alpha is ink coverage.
   const inkComp = document.createElement("canvas");
   const ctx = inkComp.getContext("2d");
   let background = null;
@@ -210,10 +206,6 @@
   let rules = [];
   let dirty = true;
   let paintedScroll = { x: -1, y: -1 };
-
-  function inkOf(el) {
-    return getComputedStyle(el).getPropertyValue("--ink").trim() || "#000";
-  }
 
   // Read every visible character, oval and underline from the DOM, in document coordinates.
   function collect() {
@@ -232,7 +224,6 @@
       const stretched = cs.fontStretch !== "100%" && cs.fontStretch !== "normal";
       const spacing = parseFloat(cs.letterSpacing) || 0;
       const upper = cs.textTransform === "uppercase";
-      const ink = inkOf(el);
       const link = el.closest("a");
 
       ctx.font = font;
@@ -250,14 +241,14 @@
         const ascent = m.fontBoundingBoxAscent || r.height * 0.8;
         // Match the DOM's glyph width exactly, whatever width the canvas font resolved to.
         const scaleX = m.width ? (r.width - spacing) / m.width : 1;
-        glyphs.push({ ch, x: r.left + sx, y: r.top + sy + ascent, scaleX, font, stretched, ink, link });
+        glyphs.push({ ch, x: r.left + sx, y: r.top + sy + ascent, scaleX, font, stretched, link });
       }
     }
 
     for (const el of page.querySelectorAll(".oval")) {
       const r = el.getBoundingClientRect();
       const width = parseFloat(getComputedStyle(el).borderTopWidth) || 0;
-      ovals.push({ x: r.left + sx, y: r.top + sy, w: r.width, h: r.height, width, ink: inkOf(el), link: el.closest("a") });
+      ovals.push({ x: r.left + sx, y: r.top + sy, w: r.width, h: r.height, width, link: el.closest("a") });
     }
 
     for (const el of page.querySelectorAll("*")) {
@@ -265,51 +256,46 @@
       const cs = getComputedStyle(el);
       const width = parseFloat(cs.borderBottomWidth) || 0;
       if (!width || cs.borderBottomStyle === "none") continue;
-      const ink = inkOf(el);
       const link = el.closest("a");
       for (const r of el.getClientRects()) {
-        rules.push({ x: r.left + sx, y: r.bottom + sy - width, w: r.width, h: width, ink, link });
+        rules.push({ x: r.left + sx, y: r.bottom + sy - width, w: r.width, h: width, link });
       }
     }
 
-    dirty = true;
+    requestDraw(true);
   }
 
   function alphaFor(link) {
     return link && link.matches(":hover") ? 0.55 : 1;
   }
 
-  function paint(viewW, viewH) {
+  function paint() {
     const sx = window.scrollX;
     const sy = window.scrollY;
-
-    const b = BG_SCALE;
-    const bgW = Math.max(1, Math.round(viewW * b));
-    const bgH = Math.max(1, Math.round(viewH * b));
-    if (comp.width !== bgW || comp.height !== bgH) {
-      comp.width = bgW;
-      comp.height = bgH;
+    const k = SCALE;
+    const w = Math.max(1, Math.round(viewW * k));
+    const h = Math.max(1, Math.round(viewH * k));
+    for (const c of [comp, inkComp]) {
+      if (c.width !== w || c.height !== h) {
+        c.width = w;
+        c.height = h;
+      }
     }
+
     // Background: covers the whole document and scrolls with it, like the CSS fallback.
     const docW = document.documentElement.clientWidth;
     const docH = Math.max(document.documentElement.scrollHeight, viewH);
     const scale = Math.max(docW / background.width, docH / background.height);
     const bw = background.width * scale;
     const bh = background.height * scale;
-    bctx.setTransform(b, 0, 0, b, 0, 0);
+    bctx.setTransform(k, 0, 0, k, 0, 0);
     bctx.imageSmoothingQuality = "high";
     bctx.drawImage(background, (docW - bw) / 2 - sx, -sy, bw, bh);
 
-    const k = dpr;
-    const inkW = Math.max(1, Math.round(viewW * k));
-    const inkH = Math.max(1, Math.round(viewH * k));
-    if (inkComp.width !== inkW || inkComp.height !== inkH) {
-      inkComp.width = inkW;
-      inkComp.height = inkH;
-    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, inkW, inkH);
-    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#000";
+    ctx.strokeStyle = "#000";
 
     let font = "";
     for (const g of glyphs) {
@@ -321,7 +307,6 @@
       }
       if ("fontStretch" in ctx) ctx.fontStretch = g.stretched ? "expanded" : "normal";
       ctx.globalAlpha = alphaFor(g.link);
-      ctx.fillStyle = g.ink;
       ctx.setTransform(k * g.scaleX, 0, 0, k, k * (g.x - sx), k * y);
       ctx.fillText(g.ch, 0, 0);
     }
@@ -329,7 +314,6 @@
 
     for (const o of ovals) {
       ctx.globalAlpha = alphaFor(o.link);
-      ctx.strokeStyle = o.ink;
       ctx.lineWidth = o.width;
       ctx.beginPath();
       ctx.ellipse(o.x - sx + o.w / 2, o.y - sy + o.h / 2, Math.max(0, o.w / 2 - o.width / 2), Math.max(0, o.h / 2 - o.width / 2), 0, 0, Math.PI * 2);
@@ -338,7 +322,6 @@
 
     for (const r of rules) {
       ctx.globalAlpha = alphaFor(r.link);
-      ctx.fillStyle = r.ink;
       ctx.fillRect(r.x - sx, r.y - sy, r.w, r.h);
     }
 
@@ -347,7 +330,6 @@
     if (focused && page.contains(focused) && focused.matches(":focus-visible")) {
       const r = focused.getBoundingClientRect();
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = inkOf(focused);
       ctx.lineWidth = 2;
       ctx.strokeRect(r.left - 4, r.top - 4, r.width + 8, r.height + 8);
     }
@@ -360,10 +342,9 @@
     gl.bindTexture(gl.TEXTURE_2D, inkTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, inkComp);
     paintedScroll = { x: sx, y: sy };
-    dirty = false;
   }
 
-  // ---------- WebGL loop ----------
+  // ---------- Drawing: static, only when the page changes ----------
 
   let dpr = 1;
   let viewW = 1;
@@ -379,55 +360,53 @@
     collect();
   }
 
-  const start = performance.now();
-
-  function draw(now) {
+  function draw() {
     if (dirty || window.scrollX !== paintedScroll.x || window.scrollY !== paintedScroll.y) {
-      paint(viewW, viewH);
+      paint();
+      dirty = false;
     }
-
     gl.uniform2f(u.u_res, canvas.width, canvas.height);
     gl.uniform2f(u.u_view, viewW, viewH);
     gl.uniform2f(u.u_scroll, paintedScroll.x, paintedScroll.y);
     gl.uniform1f(u.u_dpr, dpr);
-    gl.uniform1f(u.u_time, reduceMotion ? 0 : (now - start) / 1000);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  let running = false;
-  function loop(now) {
-    if (!running) return;
-    // With reduced motion, only redraw when the page itself changed.
-    if (!reduceMotion || dirty || window.scrollY !== paintedScroll.y || window.scrollX !== paintedScroll.x) {
-      draw(now);
-    }
-    requestAnimationFrame(loop);
+  let active = false;
+  let pending = false;
+  function requestDraw(markDirty) {
+    if (markDirty) dirty = true;
+    if (!active || pending) return;
+    pending = true;
+    requestAnimationFrame(() => {
+      pending = false;
+      if (active) draw();
+    });
   }
 
   canvas.addEventListener("webglcontextlost", (e) => {
     e.preventDefault();
-    running = false;
+    active = false;
     canvas.remove();
     document.documentElement.classList.remove("gl-on");
   });
 
   function begin() {
     document.body.append(canvas);
+    active = true;
     resize();
-    draw(start);
+    draw();
     // Hide the DOM's own ink only once the screened version is on screen.
     document.documentElement.classList.add("gl-on");
 
     window.addEventListener("resize", resize);
+    window.addEventListener("scroll", () => requestDraw(false), { passive: true });
     document.fonts.addEventListener("loadingdone", collect);
-    const markDirty = () => { dirty = true; };
+    const markDirty = () => requestDraw(true);
     document.addEventListener("pointerover", markDirty, { passive: true });
     document.addEventListener("pointerout", markDirty, { passive: true });
     document.addEventListener("focusin", markDirty);
     document.addEventListener("focusout", markDirty);
-
-    running = true;
-    requestAnimationFrame(loop);
   }
 
   const img = new Image();

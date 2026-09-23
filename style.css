@@ -4,8 +4,6 @@
 
 :root {
   --bg: #a3aba5;
-  --pink: rgb(244, 44, 132);
-  --blue: rgb(88, 72, 200);
 
   --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --page-pad: 24px;
@@ -24,7 +22,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font);
-  --ink: var(--blue);
+  --ink: #141414;
   color: var(--ink);
   background-color: var(--bg);
 }
@@ -39,7 +37,7 @@ body::before {
 }
 
 /* The halftone canvas repaints the page's ink itself (see bg.js), so the DOM's own
-   ink is hidden while it runs. Colours come from --ink so the script can read them. */
+   ink is hidden while it runs. */
 html.gl-on .page,
 html.gl-on .page * {
   color: transparent !important;
@@ -82,9 +80,10 @@ a:hover {
   align-items: center;
   gap: 24px;
   padding: 24px 0;
-  font-size: 17px;
-  font-weight: 750;
-  letter-spacing: 0.22em;
+  /* Big and heavy so it survives the coarse halftone. */
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -117,8 +116,6 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  --ink: var(--pink);
-  color: var(--ink);
   border: solid currentColor;
   border-radius: 50%;
   font-weight: 900;
@@ -144,8 +141,6 @@ a:hover {
 
 .poster__title {
   margin: 0;
-  --ink: var(--pink);
-  color: var(--ink);
   font-size: 12.86cqi;
   font-weight: 500;
   font-stretch: 125%;
@@ -205,9 +200,9 @@ a:hover {
 
 .poster__note {
   margin: 0;
-  font-size: max(12px, 3.2cqi);
-  font-weight: 750;
-  letter-spacing: 0.2em;
+  font-size: max(18px, 4.4cqi);
+  font-weight: 850;
+  letter-spacing: 0.08em;
 }
 
 /* ===== About text ===== */
@@ -216,10 +211,10 @@ a:hover {
   width: min(80%, 420px);
   margin: 0 auto;
   padding: 0 0 30vh;
-  /* Large and heavy: the halftone breaks up small body text. */
-  font-size: 26px;
-  font-weight: 650;
-  line-height: 1.3;
+  /* Poster-sized: a coarse halftone needs several dots per stroke to stay readable. */
+  font-size: 40px;
+  font-weight: 560;
+  line-height: 1.15;
   letter-spacing: 0.01em;
 }
 
@@ -238,9 +233,9 @@ a:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 32px 0;
-  font-size: 15px;
-  font-weight: 750;
-  letter-spacing: 0.22em;
+  font-size: 20px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -252,18 +247,19 @@ a:hover {
   }
 
   .nav {
-    font-size: 15px;
+    font-size: 22px;
+    letter-spacing: 0.02em;
   }
 
   .footer {
-    font-size: 13px;
+    font-size: 17px;
   }
 
   .nav__group {
-    gap: 18px;
+    gap: 16px;
   }
 
   .prose {
-    font-size: 23px;
+    font-size: 34px;
   }
 }

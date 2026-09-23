@@ -1,10 +1,11 @@
-// Colour halftone of the whole page, after Photoshop's filter stack.
+// Printed CMYK halftone of the whole page, after Photoshop's filter stack.
 // The background image and the page's type, ovals and rules are painted into one
 // composite (positions read from the real DOM). A WebGL pass then screens that composite
-// into one rotated dot grid per RGB channel: every dot takes a single colour from its
-// centre and grows with the channel's brightness. Waves shift where the dots sample, so
-// the content warps along with them. The DOM stays in place, transparent, for links,
-// selection and screen readers. Without WebGL the plain page stays visible.
+// like offset print: cyan, magenta, yellow and black dot grids on paper, each dot taking
+// one ink amount from its centre, with rough edges, ink spread and paper grain. Slow
+// waves shift where the dots sample, so the content drifts with them. The DOM stays in
+// place, transparent, for links, selection and screen readers. Without WebGL the plain
+// page stays visible.
 (() => {
   const page = document.querySelector(".page");
   if (!page) return;
@@ -34,10 +35,15 @@
     uniform vec2 u_view;
     uniform float u_dpr;
     uniform float u_time;
-    uniform vec2 u_mouse;
-    uniform float u_force;
 
-    const float CELL = 2.4;
+    const float CELL = 3.2;
+    const vec3 PAPER = vec3(0.965, 0.955, 0.925);
+    // Inks as multipliers on the paper, close to ideal so the simple CMYK split keeps hues
+    // (real process magenta would turn the pink red).
+    const vec3 CYAN = vec3(0.0, 0.92, 1.0);
+    const vec3 MAGENTA = vec3(1.0, 0.0, 0.9);
+    const vec3 YELLOW = vec3(1.0, 0.97, 0.0);
+    const vec3 BLACK = vec3(0.12, 0.12, 0.12);
 
     vec2 hash22(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
@@ -45,13 +51,32 @@
       return fract((p3.xx + p3.yz) * p3.zy);
     }
 
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      float a = hash22(i).x;
+      float b = hash22(i + vec2(1.0, 0.0)).x;
+      float c = hash22(i + vec2(0.0, 1.0)).x;
+      float d = hash22(i + vec2(1.0, 1.0)).x;
+      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
     float tri(float x) { return asin(sin(x)) * 0.6366; }
     // Square wave with a short ramp instead of a hard step, so field edges don't draw a line.
     float sq(float x) { return clamp(sin(x) * 4.0, -1.0, 1.0); }
 
-    // One channel of the colour halftone. Dots are jittered in size and position, so the
-    // four nearest cells are checked to let neighbours overlap without clipping.
-    float channel(vec2 g, float angle, float seed, vec3 mask) {
+    // RGB to CMYK with partial black generation, so greys print as a mix of black and colour dots.
+    vec4 cmyk(vec3 rgb) {
+      vec3 cmy = 1.0 - rgb;
+      float k = min(min(cmy.x, cmy.y), cmy.z) * 0.5;
+      return vec4((cmy - k) / (1.0 - k), k);
+    }
+
+    // One ink's screen. Each dot takes the ink amount at its centre; dots vary a little in
+    // size, place and density, and the four nearest cells are checked so neighbours can
+    // overlap without clipping.
+    float ink(vec2 g, float angle, float seed, vec4 mask) {
       float s = sin(angle);
       float c = cos(angle);
       mat2 rot = mat2(c, s, -s, c);
@@ -60,18 +85,23 @@
       vec2 base = floor(v);
       vec2 f = v - base;
       vec2 dir = vec2(f.x < 0.5 ? -1.0 : 1.0, f.y < 0.5 ? -1.0 : 1.0);
-      float aa = 1.0 / (CELL * u_dpr);
+      // Ink spread: a soft rim, plus a rough edge from noise in the paper.
+      float rough = (noise(g * 0.9 + seed) - 0.5) * 0.22 + (noise(g * 2.3 + seed * 1.7) - 0.5) * 0.1;
+      float soft = 0.07 + 1.0 / (CELL * u_dpr);
       float cover = 0.0;
       for (int i = 0; i < 4; i++) {
         vec2 o = vec2((i == 1 || i == 3) ? dir.x : 0.0, i >= 2 ? dir.y : 0.0);
         vec2 cell = base + o;
         vec2 rnd = hash22(cell + seed);
-        vec2 center = cell + 0.5 + (rnd - 0.5) * 0.14;
+        vec2 center = cell + 0.5 + (rnd - 0.5) * 0.16;
         vec2 centerG = inv * (center * CELL);
-        float value = dot(texture2D(u_comp, clamp(centerG / u_view, 0.0, 1.0)).rgb, mask);
-        // Dot area follows the value; size varies per dot for an organic screen.
-        float radius = 0.564 * sqrt(value) * (0.9 + 0.2 * hash22(cell + seed + 7.0).x);
-        cover = max(cover, 1.0 - smoothstep(radius - aa, radius + aa, length(v - center)));
+        float amount = dot(cmyk(texture2D(u_comp, clamp(centerG / u_view, 0.0, 1.0)).rgb), mask);
+        vec2 rnd2 = hash22(cell + seed + 7.0);
+        // Slightly under the area-true 0.564 to make up for the soft, spreading rim.
+        float radius = 0.53 * sqrt(amount) * (0.88 + 0.24 * rnd2.x);
+        float dist = length(v - center) * (1.0 + rough);
+        float dot1 = 1.0 - smoothstep(radius - soft, radius + soft, dist);
+        cover = max(cover, dot1 * (0.86 + 0.14 * rnd2.y));
       }
       return cover;
     }
@@ -81,29 +111,30 @@
       vec2 q = p / u_dpr;
       float t = u_time;
 
-      // Shared wave: square and triangle generators shift the screen in fields.
+      // Shared wave: square and triangle generators shift the screens in fields, slowly.
       vec2 w;
       w.x = sq(q.y * 0.011 + t * 0.20) * 2.2 + tri(q.y * 0.031 + q.x * 0.006 - t * 0.33) * 1.6;
       w.y = sq(q.x * 0.009 - t * 0.16) * 2.0 + tri(q.x * 0.027 + q.y * 0.005 + t * 0.27) * 1.4;
 
-      vec2 d = q - u_mouse;
-      float r = length(d);
-      float falloff = exp(-(r * r) / (240.0 * 240.0));
-      // Faded to zero at the pointer itself, where the radial direction flips.
-      w += (d / max(r, 0.001)) * sin(r * 0.05 - t * 2.5) * 6.0 * falloff * smoothstep(0.0, 40.0, r) * u_force;
+      // Each plate is slightly out of register and wobbles on its own.
+      vec2 wc = w + vec2(0.4, 0.0) + vec2(tri(q.y * 0.050 + t * 0.40), tri(q.x * 0.050 - t * 0.30)) * 0.5;
+      vec2 wm = w + vec2(-0.3, 0.3) + vec2(tri(q.y * 0.047 - t * 0.35 + 2.0), tri(q.x * 0.052 + t * 0.33 + 1.0)) * 0.5;
+      vec2 wy = w + vec2(0.0, -0.4) + vec2(tri(q.y * 0.053 + t * 0.30 + 4.0), tri(q.x * 0.049 - t * 0.37 + 3.0)) * 0.5;
 
-      // Each channel is slightly out of register and wobbles on its own.
-      vec2 wr = w + vec2(0.4, 0.0) + vec2(tri(q.y * 0.050 + t * 0.40), tri(q.x * 0.050 - t * 0.30)) * 0.5;
-      vec2 wg = w + vec2(-0.3, 0.3) + vec2(tri(q.y * 0.047 - t * 0.35 + 2.0), tri(q.x * 0.052 + t * 0.33 + 1.0)) * 0.5;
-      vec2 wb = w + vec2(0.0, -0.4) + vec2(tri(q.y * 0.053 + t * 0.30 + 4.0), tri(q.x * 0.049 - t * 0.37 + 3.0)) * 0.5;
+      // Photoshop's default CMYK halftone angles: C 108, M 162, Y 90, K 45 degrees.
+      float c = ink(q + wc, 1.885, 0.0, vec4(1.0, 0.0, 0.0, 0.0));
+      float m = ink(q + wm, 2.827, 17.0, vec4(0.0, 1.0, 0.0, 0.0));
+      float y = ink(q + wy, 1.571, 41.0, vec4(0.0, 0.0, 1.0, 0.0));
+      float k = ink(q + w, 0.785, 63.0, vec4(0.0, 0.0, 0.0, 1.0));
 
-      // Photoshop's default colour halftone angles for the three channels.
-      gl_FragColor = vec4(
-        channel(q + wr, 1.885, 0.0, vec3(1.0, 0.0, 0.0)),
-        channel(q + wg, 2.827, 17.0, vec3(0.0, 1.0, 0.0)),
-        channel(q + wb, 1.571, 41.0, vec3(0.0, 0.0, 1.0)),
-        1.0
-      );
+      float grain = hash22(floor(p)).x - 0.5;
+      vec3 col = PAPER * (1.0 + grain * 0.05);
+      col *= mix(vec3(1.0), CYAN, c);
+      col *= mix(vec3(1.0), MAGENTA, m);
+      col *= mix(vec3(1.0), YELLOW, y);
+      col *= mix(vec3(1.0), BLACK, k);
+
+      gl_FragColor = vec4(col, 1.0);
     }
   `;
 
@@ -133,7 +164,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_view", "u_dpr", "u_time", "u_mouse", "u_force"]) {
+  for (const name of ["u_res", "u_view", "u_dpr", "u_time"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -310,19 +341,6 @@
     collect();
   }
 
-  const pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  const smooth = { x: pointer.x, y: pointer.y };
-  let present = false;
-  let target = 0;
-  let force = 0;
-
-  function onMove(x, y) {
-    pointer.x = x;
-    pointer.y = y;
-    present = true;
-    target = 1;
-  }
-
   const start = performance.now();
 
   function draw(now) {
@@ -330,18 +348,10 @@
       paint(viewW, viewH);
     }
 
-    smooth.x += (pointer.x - smooth.x) * 0.12;
-    smooth.y += (pointer.y - smooth.y) * 0.12;
-    // Moving the pointer kicks the ripple up; resting over the page keeps a faint one.
-    target += ((present ? 0.3 : 0) - target) * 0.03;
-    force += (target - force) * 0.08;
-
     gl.uniform2f(u.u_res, canvas.width, canvas.height);
     gl.uniform2f(u.u_view, viewW, viewH);
     gl.uniform1f(u.u_dpr, dpr);
     gl.uniform1f(u.u_time, reduceMotion ? 0 : (now - start) / 1000);
-    gl.uniform2f(u.u_mouse, smooth.x, smooth.y);
-    gl.uniform1f(u.u_force, reduceMotion ? 0 : force);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -376,14 +386,6 @@
     document.addEventListener("pointerout", markDirty, { passive: true });
     document.addEventListener("focusin", markDirty);
     document.addEventListener("focusout", markDirty);
-
-    window.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY), { passive: true });
-    window.addEventListener("touchmove", (e) => {
-      const touch = e.touches[0];
-      if (touch) onMove(touch.clientX, touch.clientY);
-    }, { passive: true });
-    document.documentElement.addEventListener("pointerleave", () => { present = false; });
-    window.addEventListener("touchend", () => { present = false; }, { passive: true });
 
     running = true;
     requestAnimationFrame(loop);

@@ -81,7 +81,7 @@ a:hover {
   align-items: center;
   gap: 24px;
   padding: 24px 0;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 750;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -237,7 +237,7 @@ a:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 32px 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 750;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -251,11 +251,11 @@ a:hover {
   }
 
   .nav {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .footer {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .nav__group {

@@ -50,7 +50,9 @@
       float scale = max(area.x / u_tex_size.x, area.y / u_tex_size.y);
       vec2 cover = u_tex_size * scale;
       vec2 offset = vec2((view.x - cover.x) * 0.5, -margin);
-      return texture2D(u_tex, clamp((g - offset) / cover, 0.0, 1.0)).rgb;
+      vec3 c = texture2D(u_tex, clamp((g - offset) / cover, 0.0, 1.0)).rgb;
+      // Lift the darks so the coloured foreground has room to stand out.
+      return 1.0 - (1.0 - c) * 0.6;
     }
 
     // One channel of Photoshop's color halftone: a rotated grid of dots whose

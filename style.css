@@ -3,9 +3,9 @@
    ========================================================= */
 
 :root {
-  --bg: #a3aba5;
-  /* Light ink + difference blend = dark ink on light paper, light ink on dark paper. */
-  --ink: rgb(250, 247, 241);
+  --bg: #e6e9e4;
+  --pink: rgb(244, 44, 132);
+  --blue: rgb(88, 72, 200);
 
   --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --page-pad: 24px;
@@ -23,7 +23,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font);
-  color: var(--ink);
+  color: var(--blue);
   background-color: var(--bg);
 }
 
@@ -34,6 +34,7 @@ body::before {
   inset: 0;
   z-index: -1;
   background: url("img/background.webp") center top / cover no-repeat;
+  opacity: 0.55;
 }
 
 .bg-canvas {
@@ -67,7 +68,8 @@ a:hover {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 var(--page-pad);
-  mix-blend-mode: difference;
+  /* Multiply like riso ink: the colour stays, the dots show through. */
+  mix-blend-mode: multiply;
 }
 
 /* ===== Navigation ===== */
@@ -112,6 +114,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--pink);
   border: solid currentColor;
   border-radius: 50%;
   font-weight: 900;
@@ -137,6 +140,7 @@ a:hover {
 
 .poster__title {
   margin: 0;
+  color: var(--pink);
   font-size: 12.86cqi;
   font-weight: 500;
   font-stretch: 125%;

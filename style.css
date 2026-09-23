@@ -36,6 +36,17 @@ body::before {
   background: url("img/background.webp") center top / cover no-repeat;
 }
 
+/* Halftoned background (see bg.js), fixed behind the page like the CSS fallback. */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  display: block;
+  pointer-events: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -62,8 +73,9 @@ a:hover {
   align-items: center;
   gap: 24px;
   padding: 24px 0;
-  font-size: 13px;
-  letter-spacing: 0.22em;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
@@ -191,7 +203,8 @@ a:hover {
 
 .poster__note {
   margin: 0;
-  font-size: max(12px, 3.2cqi);
+  font-size: max(13px, 3.2cqi);
+  font-weight: 650;
   letter-spacing: 0.2em;
 }
 
@@ -221,8 +234,9 @@ a:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 32px 0;
-  font-size: 12px;
-  letter-spacing: 0.22em;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 

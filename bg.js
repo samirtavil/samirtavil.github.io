@@ -39,7 +39,7 @@
     uniform float u_dpr;
 
     const float CELL = 4.0;
-    const float TYPE_CELL = 2.2;
+    const float TYPE_CELL = 1.7;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
     // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
@@ -112,8 +112,8 @@
       return cover;
     }
 
-    // The type plate: a fine 45 degree screen fed by the type layer. Full coverage grows the
-    // dots into a near-solid with small gaps; edges break into dots.
+    // The type plate: a fine 45 degree screen fed by the type layer. Even at full coverage the
+    // dots stay separate, so paper shows through the letters.
     float typePlate(vec2 g) {
       mat2 rot = mat2(0.7071, 0.7071, -0.7071, 0.7071);
       mat2 inv = mat2(0.7071, -0.7071, 0.7071, 0.7071);
@@ -130,7 +130,7 @@
         vec2 center = cell + 0.5 + (hash22(cell + 91.0) - 0.5) * 0.12;
         vec2 uv = clamp((inv * (center * TYPE_CELL) - u_scroll) / u_view, 0.0, 1.0);
         float amount = smoothstep(0.1, 0.6, texture2D(u_ink, uv).a);
-        float radius = mix(0.56 * sqrt(amount), 0.68, smoothstep(0.8, 1.0, amount));
+        float radius = 0.46 * sqrt(amount);
         float dist = length(v - center) * (1.0 + rough);
         cover = max(cover, 1.0 - smoothstep(radius - soft, radius + soft, dist));
       }
@@ -167,7 +167,7 @@
 
       // Type follows the same wave, at a third of its strength so letters stay whole.
       float type = typePlate(q + w * 0.35);
-      col *= mix(vec3(1.0), BLACK, type * 0.96);
+      col *= mix(vec3(1.0), BLACK, type * 0.85);
 
       gl_FragColor = vec4(col, 1.0);
     }

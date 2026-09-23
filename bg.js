@@ -1,8 +1,9 @@
-// Printed CMYK halftone of the whole page, after Photoshop's filter stack.
-// The background image and the page's type, ovals and rules are painted into one
-// composite (positions read from the real DOM). A WebGL pass then screens that composite
-// like offset print: cyan, magenta, yellow and black dot grids on paper, each dot taking
-// one ink amount from its centre, with rough edges, ink spread and paper grain. The
+// The page printed in two passes, drawn in WebGL.
+// 1. The background image is screened like offset print: cyan, magenta, yellow and black
+//    dot grids on paper, each dot taking one ink amount from its centre, with rough edges,
+//    ink spread and paper grain. Greys go mostly to the black plate, as a printer would.
+// 2. The type, ovals and rules (positions read from the real DOM) are printed on top as
+//    flat spot colours, without a screen, with slightly uneven ink density. The
 // screens are anchored to the document, so they scroll with the page like a printed
 // sheet and dots keep their colour. Slow waves shift where the dots sample. The DOM stays in
 // place, transparent, for links, selection and screen readers. Without WebGL the plain
@@ -32,6 +33,7 @@
     precision mediump float;
     #endif
     uniform sampler2D u_comp;
+    uniform sampler2D u_ink;
     uniform vec2 u_res;
     uniform vec2 u_view;
     uniform vec2 u_scroll;
@@ -68,10 +70,12 @@
     // Square wave with a short ramp instead of a hard step, so field edges don't draw a line.
     float sq(float x) { return clamp(sin(x) * 4.0, -1.0, 1.0); }
 
-    // RGB to CMYK with partial black generation, so greys print as a mix of black and colour dots.
+    // RGB to CMYK with heavy black generation: greys print mostly as black dots, colour
+    // plates only carry what is actually coloured. The image is lightened first.
     vec4 cmyk(vec3 rgb) {
+      rgb = 1.0 - (1.0 - rgb) * 0.7;
       vec3 cmy = 1.0 - rgb;
-      float k = min(min(cmy.x, cmy.y), cmy.z) * 0.5;
+      float k = min(min(cmy.x, cmy.y), cmy.z) * 0.9;
       return vec4((cmy - k) / (1.0 - k), k);
     }
 
@@ -137,6 +141,11 @@
       col *= mix(vec3(1.0), YELLOW, y);
       col *= mix(vec3(1.0), BLACK, k);
 
+      // Spot colour pass: flat ink over the halftone, moved by the same slow wave.
+      vec4 spot = texture2D(u_ink, clamp((q + w - u_scroll) / u_view, 0.0, 1.0));
+      float density = 0.9 + 0.1 * noise(q * 0.35 + 5.0);
+      col = mix(col, spot.rgb, spot.a * density);
+
       gl_FragColor = vec4(col, 1.0);
     }
   `;
@@ -171,20 +180,30 @@
     u[name] = gl.getUniformLocation(program, name);
   }
 
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  function makeTexture(unit) {
+    const tex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    return tex;
+  }
+  const bgTexture = makeTexture(0);
+  const inkTexture = makeTexture(1);
+  gl.uniform1i(gl.getUniformLocation(program, "u_comp"), 0);
+  gl.uniform1i(gl.getUniformLocation(program, "u_ink"), 1);
 
-  // ---------- Composite: background image + page content, in viewport pixels ----------
+  // ---------- Layers: background for the screen, page content as spot ink ----------
 
-  // Painted at half resolution: each texel then averages an area about the size of a
-  // dot, so thin strokes still produce (smaller) dots instead of falling between them.
-  const COMP_SCALE = 0.5;
+  // The background is painted at half resolution, about one texel per dot.
+  const BG_SCALE = 0.5;
   const comp = document.createElement("canvas");
-  const ctx = comp.getContext("2d");
+  const bctx = comp.getContext("2d");
+  // Content is painted at device resolution on a transparent layer: alpha is ink coverage.
+  const inkComp = document.createElement("canvas");
+  const ctx = inkComp.getContext("2d");
   let background = null;
   let glyphs = [];
   let ovals = [];
@@ -263,24 +282,34 @@
   function paint(viewW, viewH) {
     const sx = window.scrollX;
     const sy = window.scrollY;
-    const k = COMP_SCALE;
-    const compW = Math.max(1, Math.round(viewW * k));
-    const compH = Math.max(1, Math.round(viewH * k));
-    if (comp.width !== compW || comp.height !== compH) {
-      comp.width = compW;
-      comp.height = compH;
-    }
 
+    const b = BG_SCALE;
+    const bgW = Math.max(1, Math.round(viewW * b));
+    const bgH = Math.max(1, Math.round(viewH * b));
+    if (comp.width !== bgW || comp.height !== bgH) {
+      comp.width = bgW;
+      comp.height = bgH;
+    }
     // Background: covers the whole document and scrolls with it, like the CSS fallback.
     const docW = document.documentElement.clientWidth;
     const docH = Math.max(document.documentElement.scrollHeight, viewH);
     const scale = Math.max(docW / background.width, docH / background.height);
     const bw = background.width * scale;
     const bh = background.height * scale;
+    bctx.setTransform(b, 0, 0, b, 0, 0);
+    bctx.imageSmoothingQuality = "high";
+    bctx.drawImage(background, (docW - bw) / 2 - sx, -sy, bw, bh);
+
+    const k = dpr;
+    const inkW = Math.max(1, Math.round(viewW * k));
+    const inkH = Math.max(1, Math.round(viewH * k));
+    if (inkComp.width !== inkW || inkComp.height !== inkH) {
+      inkComp.width = inkW;
+      inkComp.height = inkH;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, inkW, inkH);
     ctx.setTransform(k, 0, 0, k, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(background, (docW - bw) / 2 - sx, -sy, bw, bh);
 
     let font = "";
     for (const g of glyphs) {
@@ -324,8 +353,12 @@
     }
     ctx.globalAlpha = 1;
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, bgTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, comp);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, inkTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, inkComp);
     paintedScroll = { x: sx, y: sy };
     dirty = false;
   }

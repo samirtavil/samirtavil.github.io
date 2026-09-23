@@ -2,8 +2,9 @@
 // The background image and the page's type, ovals and rules (positions read from the real
 // DOM) are screened together: cyan, magenta, yellow and black dot grids on paper, each dot
 // taking one ink amount from its centre, with rough edges, ink spread and paper grain.
-// Greys go mostly to the black plate, as a printer would, and the type overprints on the
-// black plate, so it is made of the same dots and multiplies with whatever is under it.
+// Greys go mostly to the black plate, as a printer would. The type has its own, finer
+// black plate on top, so it is made of dots too and multiplies with whatever is under it,
+// but stays readable.
 // A fixed wave distortion shifts where the dots sample, like Photoshop's Wave filter. The
 // screens are anchored to the document, so the page scrolls like a printed sheet. The DOM
 // stays in place, transparent, for links, selection and screen readers. Without WebGL the
@@ -38,6 +39,7 @@
     uniform float u_dpr;
 
     const float CELL = 4.0;
+    const float TYPE_CELL = 2.2;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
     // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
@@ -77,7 +79,7 @@
 
     // One ink's screen. Each dot takes the ink amount at its centre; dots vary a little in
     // size, place and density, and the four nearest cells are checked so neighbours can
-    // overlap without clipping. The type layer overprints on the black plate.
+    // overlap without clipping.
     float ink(vec2 g, float angle, float seed, vec4 mask) {
       float s = sin(angle);
       float c = cos(angle);
@@ -98,9 +100,6 @@
         vec2 center = cell + 0.5 + (rnd - 0.5) * 0.16;
         vec2 uv = clamp((inv * (center * CELL) - u_scroll) / u_view, 0.0, 1.0);
         float amount = dot(cmyk(texture2D(u_comp, uv).rgb), mask);
-        // Partly covered cells still print full dots, so thin strokes hold together.
-        float type = smoothstep(0.08, 0.5, texture2D(u_ink, uv).a) * mask.w;
-        amount = 1.0 - (1.0 - amount) * (1.0 - type);
         vec2 rnd2 = hash22(cell + seed + 7.0);
         // Slightly under the area-true 0.564 to make up for the soft, spreading rim;
         // near full coverage the dots grow into each other, like a solid in print.
@@ -109,6 +108,31 @@
         float dist = length(v - center) * (1.0 + rough);
         float dot1 = 1.0 - smoothstep(radius - soft, radius + soft, dist);
         cover = max(cover, dot1 * (0.88 + 0.12 * rnd2.y));
+      }
+      return cover;
+    }
+
+    // The type plate: a fine 45 degree screen fed by the type layer. Full coverage grows the
+    // dots into a near-solid with small gaps; edges break into dots.
+    float typePlate(vec2 g) {
+      mat2 rot = mat2(0.7071, 0.7071, -0.7071, 0.7071);
+      mat2 inv = mat2(0.7071, -0.7071, 0.7071, 0.7071);
+      vec2 v = rot * g / TYPE_CELL;
+      vec2 base = floor(v);
+      vec2 f = v - base;
+      vec2 dir = vec2(f.x < 0.5 ? -1.0 : 1.0, f.y < 0.5 ? -1.0 : 1.0);
+      float rough = (noise(g * 1.1 + 91.0) - 0.5) * 0.18;
+      float soft = 0.05 + 1.0 / (TYPE_CELL * u_dpr);
+      float cover = 0.0;
+      for (int i = 0; i < 4; i++) {
+        vec2 o = vec2((i == 1 || i == 3) ? dir.x : 0.0, i >= 2 ? dir.y : 0.0);
+        vec2 cell = base + o;
+        vec2 center = cell + 0.5 + (hash22(cell + 91.0) - 0.5) * 0.12;
+        vec2 uv = clamp((inv * (center * TYPE_CELL) - u_scroll) / u_view, 0.0, 1.0);
+        float amount = smoothstep(0.1, 0.6, texture2D(u_ink, uv).a);
+        float radius = mix(0.56 * sqrt(amount), 0.68, smoothstep(0.8, 1.0, amount));
+        float dist = length(v - center) * (1.0 + rough);
+        cover = max(cover, 1.0 - smoothstep(radius - soft, radius + soft, dist));
       }
       return cover;
     }
@@ -140,6 +164,10 @@
       col *= mix(vec3(1.0), MAGENTA, m);
       col *= mix(vec3(1.0), YELLOW, y);
       col *= mix(vec3(1.0), BLACK, k);
+
+      // Type follows the same wave, at a third of its strength so letters stay whole.
+      float type = typePlate(q + w * 0.35);
+      col *= mix(vec3(1.0), BLACK, type * 0.96);
 
       gl_FragColor = vec4(col, 1.0);
     }
@@ -192,12 +220,11 @@
 
   // ---------- Layers: background tones and type coverage, both fed to the screen ----------
 
-  // Painted at half resolution, a few texels per dot: thin strokes still give partial
-  // coverage and so smaller dots, instead of falling between dot centres.
+  // Background tones at half resolution, a few texels per dot.
   const SCALE = 0.5;
   const comp = document.createElement("canvas");
   const bctx = comp.getContext("2d");
-  // Type layer: transparent, alpha is ink coverage.
+  // Type layer at device resolution for the fine type screen: transparent, alpha is ink coverage.
   const inkComp = document.createElement("canvas");
   const ctx = inkComp.getContext("2d");
   let background = null;
@@ -272,14 +299,19 @@
   function paint() {
     const sx = window.scrollX;
     const sy = window.scrollY;
-    const k = SCALE;
+    const b = SCALE;
+    const bgW = Math.max(1, Math.round(viewW * b));
+    const bgH = Math.max(1, Math.round(viewH * b));
+    if (comp.width !== bgW || comp.height !== bgH) {
+      comp.width = bgW;
+      comp.height = bgH;
+    }
+    const k = dpr;
     const w = Math.max(1, Math.round(viewW * k));
     const h = Math.max(1, Math.round(viewH * k));
-    for (const c of [comp, inkComp]) {
-      if (c.width !== w || c.height !== h) {
-        c.width = w;
-        c.height = h;
-      }
+    if (inkComp.width !== w || inkComp.height !== h) {
+      inkComp.width = w;
+      inkComp.height = h;
     }
 
     // Background: covers the whole document and scrolls with it, like the CSS fallback.
@@ -288,7 +320,7 @@
     const scale = Math.max(docW / background.width, docH / background.height);
     const bw = background.width * scale;
     const bh = background.height * scale;
-    bctx.setTransform(k, 0, 0, k, 0, 0);
+    bctx.setTransform(b, 0, 0, b, 0, 0);
     bctx.imageSmoothingQuality = "high";
     bctx.drawImage(background, (docW - bw) / 2 - sx, -sy, bw, bh);
 

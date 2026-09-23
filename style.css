@@ -126,8 +126,19 @@ a:hover {
   width: 100%;
   aspect-ratio: 1.85;
   border-width: 2.2cqi;
-  font-size: 24cqi;
+  font-size: 44cqi;
   letter-spacing: -0.02em;
+}
+
+/* Month under the date oval, stretched to the column width like "AUG" on the flyer. */
+.poster__month {
+  margin: 0;
+  font-size: 36.35cqi;
+  font-weight: 500;
+  font-stretch: 125%;
+  line-height: 0.8;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .oval--sm {

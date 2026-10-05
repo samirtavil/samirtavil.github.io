@@ -73,9 +73,9 @@ a:hover {
   align-items: center;
   gap: 24px;
   padding: 24px 0;
-  font-size: 14px;
-  font-weight: 650;
-  letter-spacing: 0.2em;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -160,7 +160,7 @@ a:hover {
 .poster__sub {
   margin: 0;
   font-size: 9.6cqi;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.02;
 }
 
@@ -170,15 +170,15 @@ a:hover {
   white-space: nowrap;
 }
 
-.line--a { letter-spacing: 0.274em; margin-right: -0.274em; }
-.line--b { letter-spacing: 0.528em; margin-right: -0.528em; }
-.line--c { letter-spacing: 0.533em; margin-right: -0.533em; }
-.line--d { letter-spacing: 0.637em; margin-right: -0.637em; }
+.line--a { letter-spacing: 0.27em; margin-right: -0.27em; }
+.line--b { letter-spacing: 0.526em; margin-right: -0.526em; }
+.line--c { letter-spacing: 0.536em; margin-right: -0.536em; }
+.line--d { letter-spacing: 0.618em; margin-right: -0.618em; }
 
 .poster__label {
   margin: 0;
   font-size: 9.6cqi;
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: 0.572em;
   margin-right: -0.572em;
 }
@@ -197,14 +197,14 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   font-size: 8.6cqi;
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: 0.2em;
 }
 
 .poster__note {
   margin: 0;
-  font-size: max(13px, 3.2cqi);
-  font-weight: 650;
+  font-size: max(16px, 4cqi);
+  font-weight: 800;
   letter-spacing: 0.2em;
 }
 
@@ -215,6 +215,7 @@ a:hover {
   margin: 0 auto;
   padding: 0 0 30vh;
   font-size: 19px;
+  font-weight: 560;
   line-height: 1.55;
   letter-spacing: 0.01em;
 }
@@ -234,9 +235,9 @@ a:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 32px 0;
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: 0.2em;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -249,7 +250,8 @@ a:hover {
 
   .nav,
   .footer {
-    font-size: 11px;
+    font-size: 15px;
+    letter-spacing: 0.1em;
   }
 
   .nav__group {

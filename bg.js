@@ -28,8 +28,8 @@
     uniform vec2 u_res;
     uniform vec2 u_tex_size;
     uniform float u_dpr;
-
-    const float CELL = 4.0;
+    // Dot pitch in CSS pixels: coarse on laptops, a bit finer on narrow phone screens.
+    uniform float CELL;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
     // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
@@ -166,7 +166,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_tex_size", "u_dpr"]) {
+  for (const name of ["u_res", "u_tex_size", "u_dpr", "CELL"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -180,6 +180,7 @@
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform2f(u.u_res, canvas.width, canvas.height);
     gl.uniform1f(u.u_dpr, dpr);
+    gl.uniform1f(u.CELL, rect.width < 640 ? 5.0 : 7.0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 

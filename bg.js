@@ -48,6 +48,9 @@
     const vec3 BLACK = vec3(0.1, 0.1, 0.1);
     // The flyer's dark brown-black stamp ink.
     const vec3 STAMP_INK = vec3(0.2, 0.16, 0.15);
+    // Pink and cyan under-layers of the type, as multipliers on the paper.
+    const vec3 STAMP_PINK = vec3(0.96, 0.17, 0.52);
+    const vec3 STAMP_CYAN = vec3(0.0, 0.68, 0.94);
 
     vec2 hash22(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
@@ -164,6 +167,11 @@
       // Type follows the same wave, at a third of its strength so letters stay whole. The
       // stamp ink covers the screen almost fully; only thin spots let the dots through.
       vec2 tg = q + w * 0.35;
+      // Three passes like the flyer: pink shifted up, cyan shifted down, black on top, so a
+      // thin pink edge shows above the letters and a cyan one below.
+      vec2 shift = vec2(0.3, 1.8);
+      col *= mix(vec3(1.0), STAMP_PINK, stampEdge(tg + shift) * stampDensity(tg + shift + 50.0));
+      col *= mix(vec3(1.0), STAMP_CYAN, stampEdge(tg - shift) * stampDensity(tg - shift + 90.0));
       col = mix(col, STAMP_INK * (1.0 + grain * 0.08), stampEdge(tg) * stampDensity(tg));
 
       gl_FragColor = vec4(col, 1.0);

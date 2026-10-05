@@ -4,8 +4,6 @@
 
 :root {
   --bg: #a3aba5;
-  /* Flyer ink: dark brown-black, multiplied onto the background like print. */
-  --ink: rgb(104, 78, 74);
 
   --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --page-pad: 24px;
@@ -20,29 +18,39 @@ html {
 }
 
 body {
+  position: relative;
   margin: 0;
   min-height: 100vh;
   font-family: var(--font);
+  --ink: #141414;
   color: var(--ink);
   background-color: var(--bg);
 }
 
-/* Fixed layer instead of background-attachment: fixed, which iOS Safari ignores. */
+/* Background covers the whole document and scrolls with it, like a printed sheet. */
 body::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: -1;
   background: url("img/background.webp") center top / cover no-repeat;
 }
 
-/* Halftoned background (see bg.js), fixed behind the page like the CSS fallback. */
-.bg-canvas {
+/* The halftone canvas repaints the page's ink itself (see bg.js), so the DOM's own
+   ink is hidden while it runs. */
+html.gl-on .page,
+html.gl-on .page * {
+  color: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Colour halftone of the whole page (see bg.js). */
+.dot-screen {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
+  z-index: 10;
   display: block;
   pointer-events: none;
 }
@@ -62,7 +70,6 @@ a:hover {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 var(--page-pad);
-  mix-blend-mode: multiply;
 }
 
 /* ===== Navigation ===== */
@@ -73,9 +80,10 @@ a:hover {
   align-items: center;
   gap: 24px;
   padding: 24px 0;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  /* Big and heavy so it survives the coarse halftone. */
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -139,10 +147,10 @@ a:hover {
 
 .oval--sm {
   flex-shrink: 0;
-  width: 13cqi;
-  height: 7.4cqi;
-  border-width: 0.9cqi;
-  font-size: 4.6cqi;
+  width: 17cqi;
+  height: 9.2cqi;
+  border-width: 1.3cqi;
+  font-size: 6.4cqi;
   letter-spacing: 0;
 }
 
@@ -164,7 +172,7 @@ a:hover {
 .poster__sub {
   margin: 0;
   font-size: 9.6cqi;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.02;
 }
 
@@ -174,15 +182,15 @@ a:hover {
   white-space: nowrap;
 }
 
-.line--a { letter-spacing: 0.27em; margin-right: -0.27em; }
-.line--b { letter-spacing: 0.526em; margin-right: -0.526em; }
-.line--c { letter-spacing: 0.536em; margin-right: -0.536em; }
-.line--d { letter-spacing: 0.618em; margin-right: -0.618em; }
+.line--a { letter-spacing: 0.272em; margin-right: -0.272em; }
+.line--b { letter-spacing: 0.528em; margin-right: -0.528em; }
+.line--c { letter-spacing: 0.535em; margin-right: -0.535em; }
+.line--d { letter-spacing: 0.628em; margin-right: -0.628em; }
 
 .poster__label {
   margin: 0;
   font-size: 9.6cqi;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.572em;
   margin-right: -0.572em;
 }
@@ -201,15 +209,15 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   font-size: 8.6cqi;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.2em;
 }
 
 .poster__note {
   margin: 0;
-  font-size: max(16px, 4cqi);
-  font-weight: 800;
-  letter-spacing: 0.2em;
+  font-size: max(22px, 5.4cqi);
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 /* ===== About text ===== */
@@ -218,9 +226,10 @@ a:hover {
   width: min(80%, 420px);
   margin: 0 auto;
   padding: 0 0 30vh;
-  font-size: 19px;
+  /* Poster-sized: a coarse halftone needs several dots per stroke to stay readable. */
+  font-size: 40px;
   font-weight: 560;
-  line-height: 1.55;
+  line-height: 1.15;
   letter-spacing: 0.01em;
 }
 
@@ -239,9 +248,9 @@ a:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 32px 0;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -252,17 +261,20 @@ a:hover {
     --page-pad: 20px;
   }
 
-  .nav,
+  .nav {
+    font-size: 22px;
+    letter-spacing: 0.02em;
+  }
+
   .footer {
-    font-size: 15px;
-    letter-spacing: 0.1em;
+    font-size: 20px;
   }
 
   .nav__group {
-    gap: 18px;
+    gap: 16px;
   }
 
   .prose {
-    font-size: 17px;
+    font-size: 34px;
   }
 }

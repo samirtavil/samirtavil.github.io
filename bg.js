@@ -130,10 +130,13 @@
       return smoothstep(0.32, 0.62, inkAt(g) + edge);
     }
 
+    float stampPits(vec2 g) {
+      return smoothstep(0.76, 0.86, noise(g * 0.6 + 31.0)) * (0.4 + 0.6 * noise(g * 0.07 + 5.0));
+    }
+
     float stampDensity(vec2 g) {
       float blotch = 0.86 + 0.09 * noise(g * 0.05 + 11.0) + 0.05 * noise(g * 0.3 + 23.0);
-      float pits = smoothstep(0.76, 0.86, noise(g * 0.6 + 31.0)) * (0.4 + 0.6 * noise(g * 0.07 + 5.0));
-      return blotch * (1.0 - pits * 0.85);
+      return blotch * (1.0 - stampPits(g) * 0.85);
     }
 
     void main() {
@@ -168,10 +171,12 @@
       // stamp ink covers the screen almost fully; only thin spots let the dots through.
       vec2 tg = q + w * 0.35;
       // Three passes like the flyer: pink shifted up, cyan shifted down, black on top, so a
-      // thin pink edge shows above the letters and a cyan one below.
-      vec2 shift = vec2(0.3, 1.8);
-      col *= mix(vec3(1.0), STAMP_PINK, stampEdge(tg + shift) * stampDensity(tg + shift + 50.0));
-      col *= mix(vec3(1.0), STAMP_CYAN, stampEdge(tg - shift) * stampDensity(tg - shift + 90.0));
+      // faint pink edge shows above the letters and a cyan one below. The colour passes
+      // share the black's ink gaps, so the stamp's bare spots stay paper.
+      vec2 shift = vec2(0.2, 1.1);
+      float bare = 1.0 - stampPits(tg) * 0.9;
+      col *= mix(vec3(1.0), STAMP_PINK, stampEdge(tg + shift) * stampDensity(tg + shift + 50.0) * bare * 0.55);
+      col *= mix(vec3(1.0), STAMP_CYAN, stampEdge(tg - shift) * stampDensity(tg - shift + 90.0) * bare * 0.55);
       col = mix(col, STAMP_INK * (1.0 + grain * 0.08), stampEdge(tg) * stampDensity(tg));
 
       gl_FragColor = vec4(col, 1.0);

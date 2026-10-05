@@ -10,6 +10,9 @@
 // stays in place, transparent, for links, selection and screen readers. Without WebGL the
 // plain page stays visible.
 (() => {
+  // Type treatment preview: ?schrift=1..4. Without it, the default dotted type.
+  const TYPE_VARIANT = Math.min(4, Math.max(0, parseInt(new URLSearchParams(location.search).get("schrift"), 10) || 0));
+
   const page = document.querySelector(".page");
   if (!page) return;
 
@@ -41,6 +44,8 @@
     // Dot pitch in CSS pixels for the image and the type plate; set per screen width.
     uniform float CELL;
     uniform float TYPE_CELL;
+    // Type treatment, chosen with ?schrift=1..4 (0 = fine dotted type, the default).
+    uniform float u_variant;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
     // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
@@ -140,6 +145,27 @@
       return cover;
     }
 
+    float inkAt(vec2 g) {
+      return texture2D(u_ink, clamp((g - u_scroll) / u_view, 0.0, 1.0)).a;
+    }
+
+    // Solid ink: the type layer itself, with a slightly ragged, spread edge.
+    float solidType(vec2 g) {
+      float edge = (noise(g * 0.9 + 7.0) - 0.5) * 0.3 + (noise(g * 2.6 + 3.0) - 0.5) * 0.15;
+      return smoothstep(0.32, 0.62, inkAt(g) + edge);
+    }
+
+    // Area around the type, for knocking the background dots out to bare paper.
+    float typeHalo(vec2 g) {
+      float h = inkAt(g);
+      for (int i = 0; i < 12; i++) {
+        float a = float(i) * 0.5236;
+        h = max(h, inkAt(g + vec2(cos(a), sin(a)) * 4.0));
+        h = max(h, inkAt(g + vec2(cos(a + 0.26), sin(a + 0.26)) * 8.0) * 0.7);
+      }
+      return smoothstep(0.05, 0.4, h);
+    }
+
     void main() {
       vec2 p = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y);
       // Document coordinates: screens, waves and grain travel with the page.
@@ -169,8 +195,20 @@
       col *= mix(vec3(1.0), BLACK, k);
 
       // Type follows the same wave, at a third of its strength so letters stay whole.
-      float type = typePlate(q + w * 0.35);
-      col *= mix(vec3(1.0), BLACK, type * 0.96);
+      vec2 tg = q + w * 0.35;
+      int v = int(u_variant + 0.5);
+      if (v == 2 || v == 3) {
+        col = mix(col, PAPER * (1.0 + grain * 0.05), typeHalo(tg) * 0.92);
+      }
+      if (v == 1 || v == 3) {
+        col *= mix(vec3(1.0), BLACK, solidType(tg) * 0.97);
+      } else if (v == 4) {
+        // Two impressions slightly out of register.
+        col *= mix(vec3(1.0), BLACK, solidType(tg + vec2(3.2, -2.2)) * 0.5);
+        col *= mix(vec3(1.0), BLACK, solidType(tg) * 0.95);
+      } else {
+        col *= mix(vec3(1.0), BLACK, typePlate(tg) * 0.96);
+      }
 
       gl_FragColor = vec4(col, 1.0);
     }
@@ -202,7 +240,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr", "CELL", "TYPE_CELL"]) {
+  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr", "CELL", "TYPE_CELL", "u_variant"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -413,6 +451,7 @@
     const narrow = viewW < 640;
     gl.uniform1f(u.CELL, narrow ? 5.0 : 7.0);
     gl.uniform1f(u.TYPE_CELL, narrow ? 2.4 : 3.0);
+    gl.uniform1f(u.u_variant, TYPE_VARIANT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 

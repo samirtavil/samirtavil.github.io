@@ -74,8 +74,12 @@
     vec4 cmyk(vec3 rgb) {
       rgb = 1.0 - (1.0 - rgb) * 0.7;
       vec3 cmy = 1.0 - rgb;
-      float k = min(min(cmy.x, cmy.y), cmy.z) * 0.9;
-      return vec4((cmy - k) / (1.0 - k), k);
+      // Full black generation: neutral greys go entirely to the black plate.
+      float k = min(min(cmy.x, cmy.y), cmy.z);
+      vec3 colour = (cmy - k) / max(1.0 - k, 0.001);
+      // Ignore the faint tint of the grey paper, so coarse dots don't scatter colour.
+      colour = max(colour - 0.12, 0.0) / 0.88;
+      return vec4(colour, k);
     }
 
     // One ink's screen. Each dot takes the ink amount at its centre; dots vary a little in

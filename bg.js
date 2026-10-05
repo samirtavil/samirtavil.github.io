@@ -10,9 +10,6 @@
 // stays in place, transparent, for links, selection and screen readers. Without WebGL the
 // plain page stays visible.
 (() => {
-  // Type treatment preview: ?schrift=1..4. Without it, the default dotted type.
-  const TYPE_VARIANT = Math.min(4, Math.max(0, parseInt(new URLSearchParams(location.search).get("schrift"), 10) || 0));
-
   const page = document.querySelector(".page");
   if (!page) return;
 
@@ -41,17 +38,16 @@
     uniform vec2 u_scroll;
     uniform float u_dpr;
 
-    // Dot pitch in CSS pixels for the image and the type plate; set per screen width.
+    // Dot pitch of the image screen in CSS pixels; set per screen width.
     uniform float CELL;
-    uniform float TYPE_CELL;
-    // Type treatment, chosen with ?schrift=1..4 (0 = fine dotted type, the default).
-    uniform float u_variant;
     const vec3 PAPER = vec3(0.965, 0.955, 0.925);
     // Inks as multipliers on the paper.
     const vec3 CYAN = vec3(0.0, 0.92, 1.0);
     const vec3 MAGENTA = vec3(1.0, 0.0, 0.9);
     const vec3 YELLOW = vec3(1.0, 0.97, 0.0);
     const vec3 BLACK = vec3(0.1, 0.1, 0.1);
+    // The flyer's dark brown-black stamp ink.
+    const vec3 STAMP_INK = vec3(0.2, 0.16, 0.15);
 
     vec2 hash22(vec2 p) {
       vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
@@ -120,50 +116,21 @@
       return cover;
     }
 
-    // The type plate: a fine 45 degree screen fed by the type layer. Full coverage grows the
-    // dots into a near-solid with small gaps; edges break into dots.
-    float typePlate(vec2 g) {
-      mat2 rot = mat2(0.7071, 0.7071, -0.7071, 0.7071);
-      mat2 inv = mat2(0.7071, -0.7071, 0.7071, 0.7071);
-      vec2 v = rot * g / TYPE_CELL;
-      vec2 base = floor(v);
-      vec2 f = v - base;
-      vec2 dir = vec2(f.x < 0.5 ? -1.0 : 1.0, f.y < 0.5 ? -1.0 : 1.0);
-      float rough = (noise(g * 1.1 + 91.0) - 0.5) * 0.18;
-      float soft = 0.05 + 1.0 / (TYPE_CELL * u_dpr);
-      float cover = 0.0;
-      for (int i = 0; i < 4; i++) {
-        vec2 o = vec2((i == 1 || i == 3) ? dir.x : 0.0, i >= 2 ? dir.y : 0.0);
-        vec2 cell = base + o;
-        vec2 center = cell + 0.5 + (hash22(cell + 91.0) - 0.5) * 0.12;
-        vec2 uv = clamp((inv * (center * TYPE_CELL) - u_scroll) / u_view, 0.0, 1.0);
-        float amount = smoothstep(0.1, 0.6, texture2D(u_ink, uv).a);
-        float radius = mix(0.56 * sqrt(amount), 0.68, smoothstep(0.8, 1.0, amount));
-        float dist = length(v - center) * (1.0 + rough);
-        cover = max(cover, 1.0 - smoothstep(radius - soft, radius + soft, dist));
-      }
-      return cover;
-    }
-
     float inkAt(vec2 g) {
       return texture2D(u_ink, clamp((g - u_scroll) / u_view, 0.0, 1.0)).a;
     }
 
-    // Solid ink: the type layer itself, with a slightly ragged, spread edge.
-    float solidType(vec2 g) {
+    // Type printed like the flyer's stamp: a filled area of dark ink with a slightly ragged
+    // edge, blotchy density and small spots where the ink didn't take.
+    float stampEdge(vec2 g) {
       float edge = (noise(g * 0.9 + 7.0) - 0.5) * 0.3 + (noise(g * 2.6 + 3.0) - 0.5) * 0.15;
       return smoothstep(0.32, 0.62, inkAt(g) + edge);
     }
 
-    // Area around the type, for knocking the background dots out to bare paper.
-    float typeHalo(vec2 g) {
-      float h = inkAt(g);
-      for (int i = 0; i < 12; i++) {
-        float a = float(i) * 0.5236;
-        h = max(h, inkAt(g + vec2(cos(a), sin(a)) * 4.0));
-        h = max(h, inkAt(g + vec2(cos(a + 0.26), sin(a + 0.26)) * 8.0) * 0.7);
-      }
-      return smoothstep(0.05, 0.4, h);
+    float stampDensity(vec2 g) {
+      float blotch = 0.86 + 0.09 * noise(g * 0.05 + 11.0) + 0.05 * noise(g * 0.3 + 23.0);
+      float pits = smoothstep(0.76, 0.86, noise(g * 0.6 + 31.0)) * (0.4 + 0.6 * noise(g * 0.07 + 5.0));
+      return blotch * (1.0 - pits * 0.85);
     }
 
     void main() {
@@ -194,21 +161,10 @@
       col *= mix(vec3(1.0), YELLOW, y);
       col *= mix(vec3(1.0), BLACK, k);
 
-      // Type follows the same wave, at a third of its strength so letters stay whole.
+      // Type follows the same wave, at a third of its strength so letters stay whole. The
+      // stamp ink covers the screen almost fully; only thin spots let the dots through.
       vec2 tg = q + w * 0.35;
-      int v = int(u_variant + 0.5);
-      if (v == 2 || v == 3) {
-        col = mix(col, PAPER * (1.0 + grain * 0.05), typeHalo(tg) * 0.92);
-      }
-      if (v == 1 || v == 3) {
-        col *= mix(vec3(1.0), BLACK, solidType(tg) * 0.97);
-      } else if (v == 4) {
-        // Two impressions slightly out of register.
-        col *= mix(vec3(1.0), BLACK, solidType(tg + vec2(3.2, -2.2)) * 0.5);
-        col *= mix(vec3(1.0), BLACK, solidType(tg) * 0.95);
-      } else {
-        col *= mix(vec3(1.0), BLACK, typePlate(tg) * 0.96);
-      }
+      col = mix(col, STAMP_INK * (1.0 + grain * 0.08), stampEdge(tg) * stampDensity(tg));
 
       gl_FragColor = vec4(col, 1.0);
     }
@@ -240,7 +196,7 @@
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const u = {};
-  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr", "CELL", "TYPE_CELL", "u_variant"]) {
+  for (const name of ["u_res", "u_view", "u_scroll", "u_dpr", "CELL"]) {
     u[name] = gl.getUniformLocation(program, name);
   }
 
@@ -450,8 +406,6 @@
     // Coarse dots on laptops; a little finer on narrow phone screens so type stays legible.
     const narrow = viewW < 640;
     gl.uniform1f(u.CELL, narrow ? 5.0 : 7.0);
-    gl.uniform1f(u.TYPE_CELL, narrow ? 2.4 : 3.0);
-    gl.uniform1f(u.u_variant, TYPE_VARIANT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 

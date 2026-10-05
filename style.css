@@ -3,7 +3,7 @@
    ========================================================= */
 
 :root {
-  --bg: #8c9191;
+  --bg: #a3aba5;
   /* Flyer ink: dark brown-black, multiplied onto the background like print. */
   --ink: rgb(104, 78, 74);
 
@@ -114,12 +114,16 @@ a:hover {
   line-height: 1;
 }
 
+/* A circle with the number, stretched sideways as one piece like on the flyer: the
+   stroke ends up thicker at the sides than top and bottom, and the digit gets wide. */
 .oval--hero {
-  width: 100%;
-  aspect-ratio: 1.85;
-  border-width: 2.2cqi;
+  --stretch: 1.85;
+  width: calc(100% / var(--stretch));
+  aspect-ratio: 1;
+  align-self: center;
+  border-width: 3.4cqi;
   font-size: 44cqi;
-  letter-spacing: -0.02em;
+  transform: scaleX(var(--stretch));
 }
 
 /* Month under the date oval, stretched to the column width like "AUG" on the flyer. */

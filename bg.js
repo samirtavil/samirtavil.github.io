@@ -242,7 +242,6 @@
   let ovals = [];
   let rules = [];
   let dirty = true;
-  let paintedScroll = { x: -1, y: -1 };
 
   // Read every visible character, oval and underline from the DOM, in document coordinates.
   function collect() {
@@ -306,9 +305,10 @@
     return link && link.matches(":hover") ? 0.55 : 1;
   }
 
+  // The whole document is painted once, in document coordinates.
   function paint() {
-    const sx = window.scrollX;
-    const sy = window.scrollY;
+    const sx = 0;
+    const sy = 0;
     const b = SCALE;
     const bgW = Math.max(1, Math.round(viewW * b));
     const bgH = Math.max(1, Math.round(viewH * b));
@@ -325,8 +325,8 @@
     }
 
     // Background: covers the whole document and scrolls with it, like the CSS fallback.
-    const docW = document.documentElement.clientWidth;
-    const docH = Math.max(document.documentElement.scrollHeight, viewH);
+    const docW = viewW;
+    const docH = viewH;
     const scale = Math.max(docW / background.width, docH / background.height);
     const bw = background.width * scale;
     const bh = background.height * scale;
@@ -378,7 +378,7 @@
       const r = focused.getBoundingClientRect();
       ctx.globalAlpha = 1;
       ctx.lineWidth = 2;
-      ctx.strokeRect(r.left - 4, r.top - 4, r.width + 8, r.height + 8);
+      ctx.strokeRect(r.left + window.scrollX - 4, r.top + window.scrollY - 4, r.width + 8, r.height + 8);
     }
     ctx.globalAlpha = 1;
 
@@ -388,19 +388,27 @@
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, inkTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, inkComp);
-    paintedScroll = { x: sx, y: sy };
   }
 
-  // ---------- Drawing: static, only when the page changes ----------
+  // ---------- Drawing: one sheet the size of the document ----------
+  // The canvas covers the whole page and scrolls natively with it, so nothing is redrawn
+  // while scrolling; it only redraws when the layout, fonts or hover/focus change.
+
+  const maxDims = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+  const maxSide = Math.min(maxDims[0], maxDims[1], 8192);
 
   let dpr = 1;
   let viewW = 1;
   let viewH = 1;
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = canvas.getBoundingClientRect();
-    viewW = Math.max(1, Math.round(rect.width));
-    viewH = Math.max(1, Math.round(rect.height));
+    canvas.style.height = "0px";
+    const root = document.documentElement;
+    viewW = Math.max(1, root.clientWidth);
+    viewH = Math.max(1, root.scrollHeight, window.innerHeight);
+    canvas.style.width = viewW + "px";
+    canvas.style.height = viewH + "px";
+    // Keep the sheet within the GPU's limits on tall pages.
+    dpr = Math.min(window.devicePixelRatio || 1, 2, maxSide / viewH, maxSide / viewW);
     canvas.width = Math.round(viewW * dpr);
     canvas.height = Math.round(viewH * dpr);
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -408,13 +416,13 @@
   }
 
   function draw() {
-    if (dirty || window.scrollX !== paintedScroll.x || window.scrollY !== paintedScroll.y) {
+    if (dirty) {
       paint();
       dirty = false;
     }
     gl.uniform2f(u.u_res, canvas.width, canvas.height);
     gl.uniform2f(u.u_view, viewW, viewH);
-    gl.uniform2f(u.u_scroll, paintedScroll.x, paintedScroll.y);
+    gl.uniform2f(u.u_scroll, 0, 0);
     gl.uniform1f(u.u_dpr, dpr);
     // Coarse dots on laptops; a little finer on narrow phone screens so type stays legible.
     const narrow = viewW < 640;
@@ -449,8 +457,17 @@
     // Hide the DOM's own ink only once the screened version is on screen.
     document.documentElement.classList.add("gl-on");
 
-    window.addEventListener("resize", resize);
-    window.addEventListener("scroll", () => requestDraw(false), { passive: true });
+    let resizePending = false;
+    const relayout = () => {
+      if (resizePending) return;
+      resizePending = true;
+      requestAnimationFrame(() => {
+        resizePending = false;
+        resize();
+      });
+    };
+    window.addEventListener("resize", relayout);
+    new ResizeObserver(relayout).observe(document.querySelector(".page"));
     document.fonts.addEventListener("loadingdone", collect);
     const markDirty = () => requestDraw(true);
     document.addEventListener("pointerover", markDirty, { passive: true });

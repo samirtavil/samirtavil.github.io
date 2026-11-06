@@ -133,6 +133,18 @@ a:hover {
   transform: scaleX(var(--stretch));
 }
 
+/* Placeholder page: just the oval, centred, with the name small inside. */
+.poster--solo {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 0;
+}
+
+.oval--word {
+  margin: 0;
+  font-size: max(16px, 4.4cqi);
+}
+
 /* Month under the date oval, stretched to the column width like "AUG" on the flyer. */
 .poster__month {
   margin: 0;

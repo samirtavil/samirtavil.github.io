@@ -142,7 +142,13 @@ a:hover {
 
 .oval--word {
   margin: 0;
-  font-size: max(16px, 4.4cqi);
+  font-size: max(22px, 6.4cqi);
+}
+
+/* Undoes the oval's stretch so only the ring is distorted, not the word. */
+.oval--word span {
+  display: inline-block;
+  transform: scaleX(calc(1 / var(--stretch)));
 }
 
 /* Month under the date oval, stretched to the column width like "AUG" on the flyer. */
